@@ -14,6 +14,7 @@
     <div class="container">
       <h1>테니스 토너먼트 매니저</h1>
       <p class="muted">관리자: 선수 등록 → 대진 생성 → 결과 입력 → 자동 진행</p>
+      <div id="appStatus" class="app-status">앱 로딩 중...</div>
     </div>
   </header>
 
@@ -56,93 +57,6 @@
       </div>
     </div>
   </template>
-
-  <script src="script.js"></script>
-</body>
-</html>
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>시합관리 시스템 - Demo</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-</head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <h1>시합관리 시스템</h1>
-      <div class="controls">
-        <button id="refreshBtn">🔄 새로고침</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="grid indiv-prelim-grid">
-      <!-- Example group cards -->
-      <article class="grp-card">
-        <div class="grp-header">A조 • 3팀</div>
-        <div class="grp-standings">
-          <div class="gs-row">1. 클럽A <span class="gs-stats">승 2 패 0 게임득실 +10</span></div>
-          <div class="gs-row">2. 클럽B <span class="gs-stats">승 1 패 1 게임득실 +2</span></div>
-          <div class="gs-row">3. 클럽C <span class="gs-stats">승 0 패 2 게임득실 -12</span></div>
-        </div>
-        <div class="grp-matches-section">
-          <div class="match-card" data-match-id="1">
-            <div class="m3hdr"><span class="m3tnm">클럽A</span> <span class="m3vs">vs</span> <span class="m3tnm">클럽B</span></div>
-            <div class="m3meta">코트 1 • 완료 • 6:3</div>
-            <div class="match-actions">
-              <button class="btn result">✏️ 결과입력</button>
-              <button class="btn notify">🔔 알림</button>
-            </div>
-          </div>
-          <div class="match-card" data-match-id="2">
-            <div class="m3hdr"><span class="m3tnm">클럽B</span> <span class="m3vs">vs</span> <span class="m3tnm">클럽C</span></div>
-            <div class="m3meta">코트 2 • 대기</div>
-            <div class="match-actions">
-              <button class="btn result">✏️ 결과입력</button>
-              <button class="btn notify">🔔 알림</button>
-            </div>
-          </div>
-        </div>
-        <button class="grp-matches-toggle">📋 경기목록 보기</button>
-      </article>
-
-      <article class="grp-card">
-        <div class="grp-header">B조 • 2팀</div>
-        <div class="grp-standings">
-          <div class="gs-row">1. 클럽D <span class="gs-stats">승 1 패 0 게임득실 +5</span></div>
-          <div class="gs-row">2. 클럽E <span class="gs-stats">승 0 패 1 게임득실 -5</span></div>
-        </div>
-        <div class="grp-matches-section">
-          <div class="match-card" data-match-id="3">
-            <div class="m3hdr"><span class="m3tnm">클럽D</span> <span class="m3vs">vs</span> <span class="m3tnm">클럽E</span></div>
-            <div class="m3meta">코트 3 • 시합중</div>
-            <div class="match-actions">
-              <button class="btn result">✏️ 결과입력</button>
-              <button class="btn notify">🔔 알림</button>
-            </div>
-          </div>
-        </div>
-        <button class="grp-matches-toggle">📋 경기목록 보기</button>
-      </article>
-    </section>
-  </main>
-
-  <!-- Match list popup -->
-  <div id="matchListPopup" class="match-popup" aria-hidden="true">
-    <div class="mlp-box">
-      <div class="mlp-head">
-        <div id="matchListPopupTitle">📋 경기 목록</div>
-        <button type="button" class="mlp-close" id="mlpClose">×</button>
-      </div>
-      <div class="mlp-body" id="matchListPopupBody"></div>
-    </div>
-  </div>
 
   <script src="script.js"></script>
 </body>

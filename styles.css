@@ -1,36 +1,55 @@
-:root{
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --muted:#64748b;
-  --accent:#1d4ed8;
-  --radius:12px;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans KR', 'Helvetica Neue', Arial;
+/* 기본 리셋 및 폰트 */
+:root {
+  --bg: #f7fafc;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --primary: #1f7aed;
+  --danger: #ef4444;
+  --shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color-scheme: light;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#0f172a}
-.container{max-width:1100px;margin:0 auto;padding:20px}
-.site-header{background:linear-gradient(90deg,#0ea5e9,#6366f1);color:white;padding:18px 0}
-.site-header h1{margin:0;font-weight:800}
-.muted{opacity:.9;margin-top:6px}
-.app{display:grid;grid-template-columns:1fr;gap:18px}
-.panel{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 2px 10px rgba(2,6,23,0.06)}
-.inline-row{display:flex;gap:8px;align-items:center}
-input[type="text"], input[type="number"], select{padding:8px 10px;border-radius:8px;border:1px solid #e6eefc;font-size:1rem}
-button{padding:8px 10px;border-radius:8px;border:0;background:#e2e8f0;cursor:pointer}
-button.primary, button.primary:enabled{background:var(--accent);color:#fff}
-button:disabled{opacity:.5;cursor:not-allowed}
-.players-list{margin-top:12px;padding:8px;border-radius:8px;background:#f8fafc;min-height:40px}
-.player-item{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;margin-bottom:6px;background:#fff}
-.controls{margin-top:12px;display:flex;gap:8px;align-items:center}
-.bracket-container{margin-top:12px}
-.round{display:flex;gap:12px;margin-bottom:18px}
-.match{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;background:#f8fafc}
-.slot{min-width:140px;padding:6px 8px;border-radius:6px;background:#fff}
-.vs{font-weight:800;color:var(--muted);width:30px;text-align:center}
-.scoreInputs{margin-left:auto;display:flex;align-items:center;gap:6px}
-.scoreInputs input{width:56px}
 
-@media (min-width:900px){
-  .app{grid-template-columns:360px 1fr}
+* { box-sizing: border-box; }
+html,body { height: 100%; margin:0; background:var(--bg); color:#0f172a; }
+.container { max-width:1000px; margin:0 auto; padding:20px; }
+
+/* 헤더 */
+.site-header { background: linear-gradient(90deg,#ffffff, #f1f5f9); padding:24px 0; box-shadow:var(--shadow); margin-bottom:20px; }
+.site-header h1 { margin:0 0 6px; font-size:20px; font-weight:800; }
+.muted { color:var(--muted); margin:0; font-size:13px; }
+
+/* 앱 상태 */
+.app-status { margin-top:8px; font-size:13px; color:var(--muted); }
+
+/* 패널 */
+.app { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
+.panel { background:var(--card); padding:16px; border-radius:8px; box-shadow:var(--shadow); }
+.panel h2 { margin:0 0 12px; font-size:16px; }
+
+/* controls */
+.inline-row { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.inline-row input[type="text"] { flex:1; padding:8px 10px; border:1px solid #e6e9ee; border-radius:6px; }
+button { padding:8px 10px; border-radius:6px; border:1px solid transparent; background:#e6eefc; cursor:pointer; }
+button.primary { background:var(--primary); color:white; border-color:transparent; }
+button:active { transform:translateY(1px); }
+
+/* players list */
+.players-list { margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+.player-item { display:flex; justify-content:space-between; gap:8px; padding:8px; border-radius:6px; background:#fbfdff; border:1px solid #f1f5f9; align-items:center; }
+.player-item .remove { background:transparent; color:var(--danger); border:none; cursor:pointer; font-weight:600; }
+
+/* bracket */
+.bracket-container { margin-top:12px; min-height:120px; }
+.match { display:flex; align-items:center; gap:8px; padding:8px; border-radius:6px; background:#ffffff; border:1px solid #eef2ff; margin-bottom:8px; }
+.match .slot { min-width:110px; padding:6px 8px; border-radius:4px; background:#fbfbff; border:1px solid #e6e9ee; text-align:left; }
+.match .vs { color:var(--muted); width:28px; text-align:center; }
+.scoreInputs { margin-left:auto; display:flex; gap:6px; align-items:center; }
+.scoreInputs input[type="number"] { width:48px; padding:6px; border:1px solid #e6e9ee; border-radius:6px; }
+
+/* small screens */
+@media (max-width:800px) {
+  .app { grid-template-columns: 1fr; }
+  .match .slot { min-width:80px; }
 }
 
