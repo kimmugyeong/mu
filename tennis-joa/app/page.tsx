@@ -1,16 +1,72 @@
-"use client"; // ğŸ‘ˆ ìµœìƒë‹¨ ì²« ë²ˆì§¸ ì¤„ì— ì´ ë¬¸êµ¬ë¥¼ ì¶”ê°€í•˜ì„¸ìš”!
+"use client";
+
+import { useState } from "react";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    alert(`·Î±×ÀÎ Á¤º¸\nÀÌ¸ŞÀÏ: ${email}\nºñ¹Ğ¹øÈ£: ${password}`);
+  };
+
   return (
-    <div className="flex-1 flex flex-col justify-between p-6">
-      {/* ê¸°ì¡´ ì½”ë“œ ìƒëµ... */}
-      
-      <button 
-        onClick={() => alert("í„°ì¹˜ ë°˜ì‘ì´ ì •ìƒ ë™ì‘í•©ë‹ˆë‹¤!")}
-        className="..."
-      >
-        í„°ì¹˜í•´ ë³´ì„¸ìš”
-      </button>
-    </div>
+    <main className="flex-1 flex flex-col justify-center px-6 py-10 text-gray-900">
+      <section className="space-y-8">
+        <div className="text-center">
+          <p className="text-sm uppercase tracking-[0.3em] text-teal-600">Å×´Ï½º Å¬·´</p>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            ¸ğ¹ÙÀÏ ·Î±×ÀÎ
+          </h1>
+          <p className="mt-3 text-sm text-gray-500 sm:text-base">
+            Å¬·´ °øÁö, ¿¹¾à, ¸â¹ö½Ê Á¤º¸¸¦ ¹Ù·Î È®ÀÎÇÏ¼¼¿ä.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5 bg-white rounded-3xl border border-gray-200 p-6 shadow-sm">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              ÀÌ¸ŞÀÏ ÁÖ¼Ò
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="example@mail.com"
+              required
+              className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              ºñ¹Ğ¹øÈ£
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="8ÀÚ¸® ÀÌ»ó ÀÔ·Â"
+              required
+              className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full rounded-2xl bg-teal-600 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+          >
+            ·Î±×ÀÎ
+          </button>
+        </form>
+
+        <div className="rounded-3xl border border-gray-200 bg-white p-5 text-sm text-gray-500 shadow-sm">
+          <p>Ã³À½ ¹æ¹®ÇÏ¼Ì³ª¿ä? Å¬·´ °ü¸®ÀÚ¿¡°Ô È¸¿ø °èÁ¤À» ¹®ÀÇÇÏ¼¼¿ä.</p>
+        </div>
+      </section>
+    </main>
   );
 }
