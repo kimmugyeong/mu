@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+
+}
+
+
+
+// 1. 사용자 (선수)
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  ntrp      Float?   // 테니스 실력 지수 (예: 3.5)
+  createdAt DateTime @default(now())
+
+  // 관계 설정 (내가 참여한 경기들)
+  player1Matches Match[] @relation("Player1")
+  player2Matches Match[] @relation("Player2")
+  wonMatches     Match[] @relation("Winner")
+}
+
+// 2. 경기 전적
+model Match {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  matchType   String   // "SINGLES" (단식) 또는 "DOUBLES" (복식)
+  courtName   String?  // 테니스장 이름
+
+  // 단식 기준 선수 연동
+  player1Id   String
+  player1     User     @relation("Player1", fields: [player1Id], references: [id])
+  
+  player2Id   String
+  player2     User     @relation("Player2", fields: [player2Id], references: [id])
+
+  // 경기 결과
+  winnerId    String
+  winner      User     @relation("Winner", fields: [winnerId], references: [id])
+
+  score       String   // 세트 스코어 (예: "6-4, 3-6, 10-8")
+  memo        String?  // 경기 일기/메모
+  createdAt   DateTime @default(now())
+}
