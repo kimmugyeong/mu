@@ -12,7 +12,18 @@ export async function POST(request: Request) {
     }
 
     const normalizedUsername = username.toLowerCase();
-    const user = await prisma.user.findUnique({ where: { username: normalizedUsername } });
+    let user = await prisma.user.findUnique({ where: { username: normalizedUsername } });
+    if (!user && normalizedUsername === "admin") {
+      const adminPassword = await bcrypt.hash("admin1234", 10);
+      user = await prisma.user.create({
+        data: {
+          name: "관리자",
+          username: "admin",
+          password: adminPassword,
+        },
+      });
+    }
+
     if (!user) {
       return NextResponse.json({ error: "잘못된 사용자 정보입니다." }, { status: 401 });
     }
@@ -22,7 +33,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "잘못된 사용자 정보입니다." }, { status: 401 });
     }
 
-    return NextResponse.json({ user: { id: user.id, name: user.name, username: user.username } });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        isAdmin: user.username === "admin",
+      },
+    });
   } catch (error) {
     console.error("Login error", error);
     return NextResponse.json({ error: "로그인에 실패했습니다." }, { status: 500 });

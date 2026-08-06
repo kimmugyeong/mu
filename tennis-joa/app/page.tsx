@@ -53,7 +53,7 @@ export default function Home() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState("");
-  const [loggedInUser, setLoggedInUser] = useState<{ name: string; username: string } | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<{ name: string; username: string; isAdmin?: boolean } | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -177,7 +177,8 @@ export default function Home() {
         return;
       }
 
-      setLoggedInUser({ name: result.user.name, username: result.user.username });
+      const isAdmin = result.user.username === "admin";
+      setLoggedInUser({ name: result.user.name, username: result.user.username, isAdmin });
       setStatus(`${result.user.name}님, 환영합니다.`);
       setForm((prev) => ({ ...prev, password: "" }));
       setView("clubs");
@@ -242,13 +243,15 @@ export default function Home() {
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">클럽 찾기</h2>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm((prev) => !prev)}
-                className="rounded-full bg-teal-600 px-3 py-1.5 text-sm font-medium text-white"
-              >
-                {showCreateForm ? "닫기" : "클럽 생성"}
-              </button>
+              {loggedInUser?.isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm((prev) => !prev)}
+                  className="rounded-full bg-teal-600 px-3 py-1.5 text-sm font-medium text-white"
+                >
+                  {showCreateForm ? "닫기" : "클럽 생성"}
+                </button>
+              ) : null}
             </div>
 
             {showCreateForm ? (
