@@ -13,7 +13,9 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String   @unique
+  username  String   @unique
+  password  String
+  email     String?  @unique
   ntrp      Float?   // 테니스 실력 지수 (예: 3.5)
   createdAt DateTime @default(now())
 

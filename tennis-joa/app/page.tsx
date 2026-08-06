@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { authenticateUser, saveUser, validateSignupInput } from "@/lib/auth";
 
 type Mode = "login" | "signup";
 type ViewMode = "auth" | "clubs" | "club";
@@ -81,25 +80,60 @@ export default function Home() {
     setView("clubs");
   };
 
-  const handleLogin = (event: React.SyntheticEvent) => {
+  const validateClientInput = () => {
+    const nextErrors: Partial<Record<keyof FormState, string>> = {};
+
+    if (!form.name.trim()) {
+      nextErrors.name = "이름을 입력해주세요.";
+    }
+
+    if (!form.username.trim()) {
+      nextErrors.username = "아이디를 입력해주세요.";
+    } else if (!/^[a-z0-9_]{4,20}$/i.test(form.username)) {
+      nextErrors.username = "아이디는 4~20자의 영문, 숫자, _만 사용할 수 있습니다.";
+    }
+
+    if (!form.password) {
+      nextErrors.password = "비밀번호를 입력해주세요.";
+    } else if (form.password.length < 8) {
+      nextErrors.password = "비밀번호는 8자리 이상이어야 합니다.";
+    }
+
+    return nextErrors;
+  };
+
+  const handleLogin = async (event: React.SyntheticEvent) => {
     event.preventDefault();
     setErrors({});
 
-    const user = authenticateUser(form.username.trim().toLowerCase(), form.password);
-    if (user) {
-      setLoggedInUser({ name: user.name, username: user.username });
-      setStatus(`${user.name}님, 환영합니다.`);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username.trim().toLowerCase(),
+          password: form.password,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.user) {
+        setStatus("아이디 또는 비밀번호가 올바르지 않습니다.");
+        return;
+      }
+
+      setLoggedInUser({ name: result.user.name, username: result.user.username });
+      setStatus(`${result.user.name}님, 환영합니다.`);
       setForm((prev) => ({ ...prev, password: "" }));
       setView("clubs");
-      return;
+    } catch {
+      setStatus("로그인 중 문제가 발생했습니다.");
     }
-
-    setStatus("아이디 또는 비밀번호가 올바르지 않습니다.");
   };
 
-  const handleSignup = (event: React.SyntheticEvent) => {
+  const handleSignup = async (event: React.SyntheticEvent) => {
     event.preventDefault();
-    const nextErrors = validateSignupInput(form) as Partial<Record<keyof FormState, string>>;
+    const nextErrors = validateClientInput();
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -107,16 +141,31 @@ export default function Home() {
       return;
     }
 
-    saveUser({
-      name: form.name.trim(),
-      username: form.username.trim().toLowerCase(),
-      password: form.password,
-    });
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          username: form.username.trim().toLowerCase(),
+          password: form.password,
+        }),
+      });
 
-    setStatus("회원가입이 완료되었습니다. 이제 로그인해 주세요.");
-    setErrors({});
-    setForm(initialForm);
-    setMode("login");
+      const result = await response.json();
+      if (!response.ok) {
+        setErrors({ username: result.error ?? "회원가입에 실패했습니다." });
+        setStatus("");
+        return;
+      }
+
+      setStatus("회원가입이 완료되었습니다. 이제 로그인해 주세요.");
+      setErrors({});
+      setForm(initialForm);
+      setMode("login");
+    } catch {
+      setStatus("회원가입 중 문제가 발생했습니다.");
+    }
   };
 
   if (view === "clubs") {
