@@ -7,16 +7,14 @@ type Mode = "login" | "signup";
 
 type FormState = {
   name: string;
-  email: string;
+  username: string;
   password: string;
-  ntrp: string;
 };
 
 const initialForm: FormState = {
   name: "",
-  email: "",
+  username: "",
   password: "",
-  ntrp: "",
 };
 
 export default function Home() {
@@ -35,15 +33,15 @@ export default function Home() {
     event.preventDefault();
     setErrors({});
 
-    const user = authenticateUser(form.email.trim().toLowerCase(), form.password);
+    const user = authenticateUser(form.username.trim().toLowerCase(), form.password);
     if (user) {
-      setLoggedInUser({ name: user.name, email: user.email });
+      setLoggedInUser({ name: user.name, email: user.username });
       setStatus(`${user.name}님, 환영합니다.`);
       setForm((prev) => ({ ...prev, password: "" }));
       return;
     }
 
-    setStatus("이메일 또는 비밀번호가 올바르지 않습니다.");
+    setStatus("아이디 또는 비밀번호가 올바르지 않습니다.");
   };
 
   const handleSignup = (event: React.FormEvent<HTMLFormElement>) => {
@@ -58,9 +56,8 @@ export default function Home() {
 
     saveUser({
       name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
+      username: form.username.trim().toLowerCase(),
       password: form.password,
-      ntrp: Number(form.ntrp),
     });
 
     setStatus("회원가입이 완료되었습니다. 이제 로그인해 주세요.");
@@ -114,7 +111,7 @@ export default function Home() {
         {loggedInUser ? (
           <div className="rounded-3xl border border-teal-100 bg-teal-50 p-5 text-sm text-teal-700 shadow-sm">
             <p className="font-semibold">{loggedInUser.name}님, 로그인되었습니다.</p>
-            <p className="mt-1">{loggedInUser.email}</p>
+            <p className="mt-1">아이디: {loggedInUser.email}</p>
           </div>
         ) : null}
 
@@ -127,15 +124,15 @@ export default function Home() {
         {mode === "login" ? (
           <form onSubmit={handleLogin} className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                이메일 주소
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                아이디
               </label>
               <input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="example@mail.com"
+                id="username"
+                type="text"
+                value={form.username}
+                onChange={(event) => updateField("username", event.target.value)}
+                placeholder="example123"
                 required
                 className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               />
@@ -181,18 +178,18 @@ export default function Home() {
             </div>
 
             <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700">
-                이메일 주소
+              <label htmlFor="signup-username" className="block text-sm font-medium text-gray-700">
+                아이디
               </label>
               <input
-                id="signup-email"
-                type="email"
-                value={form.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="example@mail.com"
+                id="signup-username"
+                type="text"
+                value={form.username}
+                onChange={(event) => updateField("username", event.target.value)}
+                placeholder="example123"
                 className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               />
-              {errors.email ? <p className="mt-2 text-sm text-red-500">{errors.email}</p> : null}
+              {errors.username ? <p className="mt-2 text-sm text-red-500">{errors.username}</p> : null}
             </div>
 
             <div>
@@ -208,24 +205,6 @@ export default function Home() {
                 className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               />
               {errors.password ? <p className="mt-2 text-sm text-red-500">{errors.password}</p> : null}
-            </div>
-
-            <div>
-              <label htmlFor="ntrp" className="block text-sm font-medium text-gray-700">
-                실력 지수
-              </label>
-              <input
-                id="ntrp"
-                type="number"
-                step="0.5"
-                min="1"
-                max="7"
-                value={form.ntrp}
-                onChange={(event) => updateField("ntrp", event.target.value)}
-                placeholder="3.5"
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-              />
-              {errors.ntrp ? <p className="mt-2 text-sm text-red-500">{errors.ntrp}</p> : null}
             </div>
 
             <button

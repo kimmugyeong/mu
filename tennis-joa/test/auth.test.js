@@ -28,41 +28,37 @@ test.afterEach(() => {
 test('회원가입 입력이 올바르면 오류가 없다', () => {
   const errors = validateSignupInput({
     name: '홍길동',
-    email: 'hong@test.com',
+    username: 'hong123',
     password: 'password123',
-    ntrp: '3.5',
   });
 
   assert.deepEqual(errors, {});
 });
 
-test('중복 이메일은 에러를 반환한다', () => {
+test('중복 아이디는 에러를 반환한다', () => {
   saveUser({
     name: '홍길동',
-    email: 'hong@test.com',
+    username: 'hong123',
     password: 'password123',
-    ntrp: 3.5,
   });
 
   const errors = validateSignupInput({
     name: '김철수',
-    email: 'hong@test.com',
+    username: 'hong123',
     password: 'password123',
-    ntrp: '4.0',
   });
 
-  assert.equal(errors.email, '이미 등록된 이메일입니다.');
+  assert.equal(errors.username, '이미 사용 중인 아이디입니다.');
 });
 
-test('저장된 사용자는 로그인할 수 있다', () => {
+test('저장된 사용자는 아이디로 로그인할 수 있다', () => {
   saveUser({
     name: '홍길동',
-    email: 'hong@test.com',
+    username: 'hong123',
     password: 'password123',
-    ntrp: 3.5,
   });
 
-  const user = authenticateUser('hong@test.com', 'password123');
+  const user = authenticateUser('hong123', 'password123');
 
   assert.ok(user);
   assert.equal(user.name, '홍길동');

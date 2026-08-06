@@ -30,31 +30,31 @@ export function saveUser(user) {
   return nextUsers;
 }
 
-export function authenticateUser(email, password) {
+export function authenticateUser(username, password) {
   const users = getStoredUsers();
-  return users.find((user) => user.email === email && user.password === password) || null;
+  return users.find((user) => user.username === username && user.password === password) || null;
 }
 
 export function validateSignupInput(values) {
   const errors = {};
-  const normalizedEmail = values.email.trim().toLowerCase();
+  const normalizedUsername = values.username.trim().toLowerCase();
 
   if (!values.name.trim()) {
     errors.name = "이름을 입력해주세요.";
   }
 
-  if (!values.email.trim()) {
-    errors.email = "이메일을 입력해주세요.";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "올바른 이메일 형식이 아닙니다.";
+  if (!values.username.trim()) {
+    errors.username = "아이디를 입력해주세요.";
+  } else if (!/^[a-z0-9_]{4,20}$/i.test(values.username)) {
+    errors.username = "아이디는 4~20자의 영문, 숫자, _만 사용할 수 있습니다.";
   } else {
     const existingUsers = getStoredUsers();
     const isDuplicate = existingUsers.some(
-      (user) => user.email.toLowerCase() === normalizedEmail,
+      (user) => user.username.toLowerCase() === normalizedUsername,
     );
 
     if (isDuplicate) {
-      errors.email = "이미 등록된 이메일입니다.";
+      errors.username = "이미 사용 중인 아이디입니다.";
     }
   }
 
@@ -62,15 +62,6 @@ export function validateSignupInput(values) {
     errors.password = "비밀번호를 입력해주세요.";
   } else if (values.password.length < 8) {
     errors.password = "비밀번호는 8자리 이상이어야 합니다.";
-  }
-
-  if (values.ntrp === "") {
-    errors.ntrp = "실력 지수를 입력해주세요.";
-  } else {
-    const ntrp = Number(values.ntrp);
-    if (Number.isNaN(ntrp) || ntrp < 1 || ntrp > 7) {
-      errors.ntrp = "실력 지수는 1.0~7.0 사이여야 합니다.";
-    }
   }
 
   return errors;
