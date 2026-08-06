@@ -29,7 +29,7 @@ export default function Home() {
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = (event: React.SyntheticEvent) => {
     event.preventDefault();
     setErrors({});
 
@@ -44,7 +44,7 @@ export default function Home() {
     setStatus("아이디 또는 비밀번호가 올바르지 않습니다.");
   };
 
-  const handleSignup = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = (event: React.SyntheticEvent) => {
     event.preventDefault();
     const nextErrors = validateSignupInput(form) as Partial<Record<keyof FormState, string>>;
 
