@@ -47,3 +47,14 @@ model Match {
   memo        String?  // 경기 일기/메모
   createdAt   DateTime @default(now())
 }
+
+model Club {
+  id           String   @id @default(cuid())
+  name         String
+  address      String
+  city         String
+  description  String
+  contactPhone String?
+  contactEmail String?
+  createdAt    DateTime @default(now())
+}
