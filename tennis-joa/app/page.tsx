@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { validateClubInput } from "@/lib/clubValidation";
 
 type Mode = "login" | "signup";
 type ViewMode = "auth" | "clubs" | "club";
@@ -14,10 +15,12 @@ type FormState = {
 type Club = {
   id: string;
   name: string;
-  location: string;
-  members: string;
+  address: string;
+  city: string;
   description: string;
-  tag: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  createdAt?: string;
 };
 
 const initialForm: FormState = {
@@ -26,35 +29,23 @@ const initialForm: FormState = {
   password: "",
 };
 
-const featuredClubs: Club[] = [
-  {
-    id: "sunrise",
-    name: "선라이즈 테니스 클럽",
-    location: "강남구",
-    members: "128명",
-    description: "주말 아침 연습과 친목 모임이 활발한 클럽입니다.",
-    tag: "주말 러닝",
-  },
-  {
-    id: "park",
-    name: "공원 테니스 모임",
-    location: "송파구",
-    members: "84명",
-    description: "초보자도 쉽게 참가할 수 있는 편한 분위기입니다.",
-    tag: "초보 환영",
-  },
-];
+type ClubFormState = {
+  name: string;
+  address: string;
+  city: string;
+  description: string;
+  contactPhone: string;
+  contactEmail: string;
+};
 
-const joinedClubs: Club[] = [
-  {
-    id: "royal",
-    name: "로얄 테니스 스쿨",
-    location: "서초구",
-    members: "54명",
-    description: "주 3회 코트 훈련과 경기 지원이 잘 되어 있습니다.",
-    tag: "실전 중심",
-  },
-];
+const initialClubForm: ClubFormState = {
+  name: "",
+  address: "",
+  city: "",
+  description: "",
+  contactPhone: "",
+  contactEmail: "",
+};
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("login");
@@ -64,6 +55,11 @@ export default function Home() {
   const [status, setStatus] = useState("");
   const [loggedInUser, setLoggedInUser] = useState<{ name: string; username: string } | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [clubForm, setClubForm] = useState<ClubFormState>(initialClubForm);
+  const [clubErrors, setClubErrors] = useState<Partial<Record<keyof ClubFormState, string>>>({});
+  const [clubStatus, setClubStatus] = useState("");
 
   const updateField = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -78,6 +74,65 @@ export default function Home() {
   const goToClubs = () => {
     setSelectedClub(null);
     setView("clubs");
+  };
+
+  useEffect(() => {
+    const loadClubs = async () => {
+      try {
+        const response = await fetch("/api/clubs");
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        setClubs(data);
+      } catch {
+        // ignore
+      }
+    };
+
+    if (view === "clubs") {
+      loadClubs();
+    }
+  }, [view]);
+
+  const updateClubField = (field: keyof ClubFormState, value: string) => {
+    setClubForm((prev) => ({ ...prev, [field]: value }));
+    setClubErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleCreateClub = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    const nextErrors = validateClubInput(clubForm);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setClubErrors(nextErrors);
+      setClubStatus("");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/clubs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clubForm),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        setClubStatus(result.error ?? "클럽 생성에 실패했습니다.");
+        return;
+      }
+
+      const createdClub = await response.json();
+      setClubs((prev) => [createdClub, ...prev]);
+      setClubForm(initialClubForm);
+      setShowCreateForm(false);
+      setClubStatus("클럽이 생성되었습니다.");
+      setSelectedClub(createdClub);
+      setView("club");
+    } catch {
+      setClubStatus("클럽 생성 중 문제가 발생했습니다.");
+    }
   };
 
   const validateClientInput = () => {
@@ -187,10 +242,59 @@ export default function Home() {
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">클럽 찾기</h2>
-              <span className="text-sm text-teal-600">추천 클럽</span>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm((prev) => !prev)}
+                className="rounded-full bg-teal-600 px-3 py-1.5 text-sm font-medium text-white"
+              >
+                {showCreateForm ? "닫기" : "클럽 생성"}
+              </button>
             </div>
+
+            {showCreateForm ? (
+              <form onSubmit={handleCreateClub} className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">클럽 이름</label>
+                  <input value={clubForm.name} onChange={(event) => updateClubField("name", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  {clubErrors.name ? <p className="mt-1 text-sm text-red-500">{clubErrors.name}</p> : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">주소</label>
+                  <input value={clubForm.address} onChange={(event) => updateClubField("address", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  {clubErrors.address ? <p className="mt-1 text-sm text-red-500">{clubErrors.address}</p> : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">도시</label>
+                  <input value={clubForm.city} onChange={(event) => updateClubField("city", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  {clubErrors.city ? <p className="mt-1 text-sm text-red-500">{clubErrors.city}</p> : null}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">클럽 소개</label>
+                  <textarea value={clubForm.description} onChange={(event) => updateClubField("description", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={3} />
+                  {clubErrors.description ? <p className="mt-1 text-sm text-red-500">{clubErrors.description}</p> : null}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">연락처</label>
+                    <input value={clubForm.contactPhone} onChange={(event) => updateClubField("contactPhone", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    {clubErrors.contactPhone ? <p className="mt-1 text-sm text-red-500">{clubErrors.contactPhone}</p> : null}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">이메일</label>
+                    <input value={clubForm.contactEmail} onChange={(event) => updateClubField("contactEmail", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    {clubErrors.contactEmail ? <p className="mt-1 text-sm text-red-500">{clubErrors.contactEmail}</p> : null}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">생성</button>
+                  <button type="button" onClick={() => { setShowCreateForm(false); setClubForm(initialClubForm); setClubErrors({}); setClubStatus(""); }} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700">취소</button>
+                </div>
+                {clubStatus ? <p className="text-sm text-gray-600">{clubStatus}</p> : null}
+              </form>
+            ) : null}
+
             <div className="mt-4 space-y-3">
-              {featuredClubs.map((club) => (
+              {clubs.map((club) => (
                 <button
                   key={club.id}
                   type="button"
@@ -200,40 +304,13 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-gray-900">{club.name}</p>
-                      <p className="mt-1 text-sm text-gray-500">{club.location} · {club.members}</p>
+                      <p className="mt-1 text-sm text-gray-500">{club.address} · {club.city}</p>
                     </div>
                     <span className="rounded-full bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-700">
-                      {club.tag}
+                      새 클럽
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-gray-600">{club.description}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">현재 가입된 클럽</h2>
-              <span className="text-sm text-gray-400">2개</span>
-            </div>
-            <div className="mt-4 space-y-3">
-              {joinedClubs.map((club) => (
-                <button
-                  key={club.id}
-                  type="button"
-                  onClick={() => openClub(club)}
-                  className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900">{club.name}</p>
-                      <p className="mt-1 text-sm text-gray-500">{club.location} · {club.members}</p>
-                    </div>
-                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                      가입됨
-                    </span>
-                  </div>
                 </button>
               ))}
             </div>
@@ -260,9 +337,10 @@ export default function Home() {
             <h1 className="mt-2 text-2xl font-semibold">{selectedClub.name}</h1>
             <p className="mt-2 text-sm text-gray-600">{selectedClub.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-teal-100 px-3 py-1 text-sm text-teal-700">{selectedClub.location}</span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.members}</span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.tag}</span>
+              <span className="rounded-full bg-teal-100 px-3 py-1 text-sm text-teal-700">{selectedClub.address}</span>
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.city}</span>
+              {selectedClub.contactPhone ? <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.contactPhone}</span> : null}
+              {selectedClub.contactEmail ? <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.contactEmail}</span> : null}
             </div>
           </div>
 
