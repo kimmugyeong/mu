@@ -60,6 +60,17 @@ export default function Home() {
   const [clubForm, setClubForm] = useState<ClubFormState>(initialClubForm);
   const [clubErrors, setClubErrors] = useState<Partial<Record<keyof ClubFormState, string>>>({});
   const [clubStatus, setClubStatus] = useState("");
+  const [activeTab, setActiveTab] = useState<"notices" | "merch" | "matches" | "tournaments">("notices");
+  const [notices, setNotices] = useState<any[]>([]);
+  const [merchandises, setMerchandises] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [matches, setMatches] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [noticeForm, setNoticeForm] = useState({ title: "", content: "", isImportant: false });
+  const [merchForm, setMerchForm] = useState({ name: "", description: "", price: "", imageUrl: "", sizes: "" });
+  const [orderForm, setOrderForm] = useState({ merchandiseId: "", selectedSize: "", quantity: "1", userId: "" });
+  const [matchForm, setMatchForm] = useState({ matchType: "DOUBLE", player1Id: "", player2Id: "", opponent1Name: "", opponent2Name: "", score: "", isWin: true });
+  const [tournamentForm, setTournamentForm] = useState({ title: "", eventDate: "", players: "" });
 
   const updateField = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -94,6 +105,38 @@ export default function Home() {
       loadClubs();
     }
   }, [view]);
+
+  useEffect(() => {
+    if (!selectedClub) return;
+
+    const loadClubData = async () => {
+      try {
+        const [noticesRes, merchRes, ordersRes, matchesRes, tournamentsRes] = await Promise.all([
+          fetch(`/api/clubs/${selectedClub.id}/notices`),
+          fetch(`/api/clubs/${selectedClub.id}/merchandises`),
+          fetch(`/api/clubs/${selectedClub.id}/orders`),
+          fetch(`/api/clubs/${selectedClub.id}/matches`),
+          fetch(`/api/clubs/${selectedClub.id}/tournaments`),
+        ]);
+        const [noticesData, merchData, ordersData, matchesData, tournamentsData] = await Promise.all([
+          noticesRes.json(),
+          merchRes.json(),
+          ordersRes.json(),
+          matchesRes.json(),
+          tournamentsRes.json(),
+        ]);
+        setNotices(noticesData);
+        setMerchandises(merchData);
+        setOrders(ordersData);
+        setMatches(matchesData);
+        setTournaments(tournamentsData);
+      } catch {
+        // ignore
+      }
+    };
+
+    loadClubData();
+  }, [selectedClub]);
 
   const updateClubField = (field: keyof ClubFormState, value: string) => {
     setClubForm((prev) => ({ ...prev, [field]: value }));
@@ -132,6 +175,81 @@ export default function Home() {
       setView("club");
     } catch {
       setClubStatus("클럽 생성 중 문제가 발생했습니다.");
+    }
+  };
+
+  const handleCreateNotice = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (!selectedClub) return;
+    const response = await fetch(`/api/clubs/${selectedClub.id}/notices`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...noticeForm, authorId: loggedInUser?.username === "admin" ? undefined : undefined }),
+    });
+    if (response.ok) {
+      const created = await response.json();
+      setNotices((prev) => [created, ...prev]);
+      setNoticeForm({ title: "", content: "", isImportant: false });
+    }
+  };
+
+  const handleCreateMerch = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (!selectedClub) return;
+    const response = await fetch(`/api/clubs/${selectedClub.id}/merchandises`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...merchForm, sizes: merchForm.sizes.split(",").map((item) => item.trim()).filter(Boolean) }),
+    });
+    if (response.ok) {
+      const created = await response.json();
+      setMerchandises((prev) => [created, ...prev]);
+      setMerchForm({ name: "", description: "", price: "", imageUrl: "", sizes: "" });
+    }
+  };
+
+  const handleCreateOrder = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (!selectedClub || !loggedInUser) return;
+    const response = await fetch(`/api/clubs/${selectedClub.id}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...orderForm, userId: loggedInUser.username, quantity: Number(orderForm.quantity) }),
+    });
+    if (response.ok) {
+      const created = await response.json();
+      setOrders((prev) => [created, ...prev]);
+      setOrderForm((prev) => ({ ...prev, selectedSize: "", quantity: "1" }));
+    }
+  };
+
+  const handleCreateMatch = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (!selectedClub) return;
+    const response = await fetch(`/api/clubs/${selectedClub.id}/matches`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(matchForm),
+    });
+    if (response.ok) {
+      const created = await response.json();
+      setMatches((prev) => [created, ...prev]);
+      setMatchForm({ matchType: "DOUBLE", player1Id: "", player2Id: "", opponent1Name: "", opponent2Name: "", score: "", isWin: true });
+    }
+  };
+
+  const handleCreateTournament = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (!selectedClub) return;
+    const response = await fetch(`/api/clubs/${selectedClub.id}/tournaments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...tournamentForm, players: tournamentForm.players.split(",").map((item) => item.trim()).filter(Boolean) }),
+    });
+    if (response.ok) {
+      const created = await response.json();
+      setTournaments((prev) => [created, ...prev]);
+      setTournamentForm({ title: "", eventDate: "", players: "" });
     }
   };
 
@@ -348,16 +466,99 @@ export default function Home() {
           </div>
 
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">오늘의 일정</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
-              <li>• 오후 6:30 · 자유연습</li>
-              <li>• 오후 8:00 · 클럽 미팅</li>
-            </ul>
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {([['notices','공지사항'], ['merch','단체복'], ['matches','경기전적'], ['tournaments','월례회']] as const).map(([key,label]) => (
+                <button key={key} type="button" onClick={() => setActiveTab(key)} className={`rounded-full px-3 py-1.5 text-sm font-medium ${activeTab === key ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">최근 소식</h2>
-            <p className="mt-2 text-sm text-gray-600">이번 주말에 코트 예약이 열렸습니다. 참여해 보세요.</p>
+            {activeTab === 'notices' ? (
+              <div className="mt-4 space-y-3">
+                {loggedInUser?.isAdmin ? (
+                  <form onSubmit={handleCreateNotice} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                    <input value={noticeForm.title} onChange={(event) => setNoticeForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="공지 제목" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    <textarea value={noticeForm.content} onChange={(event) => setNoticeForm((prev) => ({ ...prev, content: event.target.value }))} placeholder="공지 내용을 입력하세요" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={3} />
+                    <label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" checked={noticeForm.isImportant} onChange={(event) => setNoticeForm((prev) => ({ ...prev, isImportant: event.target.checked }))} /> 필독 공지</label>
+                    <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">공지 등록</button>
+                  </form>
+                ) : null}
+                {notices.map((notice) => (
+                  <div key={notice.id} className="rounded-2xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">{notice.title}</h3>
+                      {notice.isImportant ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-700">필독</span> : null}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-600">{notice.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeTab === 'merch' ? (
+              <div className="mt-4 space-y-3">
+                {loggedInUser?.isAdmin ? (
+                  <form onSubmit={handleCreateMerch} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                    <input value={merchForm.name} onChange={(event) => setMerchForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="상품명" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    <input value={merchForm.price} onChange={(event) => setMerchForm((prev) => ({ ...prev, price: event.target.value }))} placeholder="가격" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    <input value={merchForm.sizes} onChange={(event) => setMerchForm((prev) => ({ ...prev, sizes: event.target.value }))} placeholder="사이즈(예: S,M,L)" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                    <textarea value={merchForm.description} onChange={(event) => setMerchForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="설명" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={2} />
+                    <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">상품 등록</button>
+                  </form>
+                ) : null}
+                {merchandises.map((item) => (
+                  <div key={item.id} className="rounded-2xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                      <span className="text-sm font-medium text-teal-700">{item.price.toLocaleString()}원</span>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-600">{item.description}</p>
+                    <p className="mt-2 text-sm text-gray-500">사이즈: {item.sizes?.join(', ')}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeTab === 'matches' ? (
+              <div className="mt-4 space-y-3">
+                <form onSubmit={handleCreateMatch} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                  <input value={matchForm.opponent1Name} onChange={(event) => setMatchForm((prev) => ({ ...prev, opponent1Name: event.target.value }))} placeholder="상대 1" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <input value={matchForm.opponent2Name} onChange={(event) => setMatchForm((prev) => ({ ...prev, opponent2Name: event.target.value }))} placeholder="상대 2" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <input value={matchForm.score} onChange={(event) => setMatchForm((prev) => ({ ...prev, score: event.target.value }))} placeholder="세트 스코어" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" checked={matchForm.isWin} onChange={(event) => setMatchForm((prev) => ({ ...prev, isWin: event.target.checked }))} /> 승리</label>
+                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">경기 결과 등록</button>
+                </form>
+                {matches.map((match) => (
+                  <div key={match.id} className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span>{match.matchType}</span>
+                      <span>{match.isWin ? '승' : '패'}</span>
+                    </div>
+                    <p className="mt-2">대전: {match.opponent1Name} / {match.opponent2Name}</p>
+                    <p className="mt-1">점수: {match.score}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeTab === 'tournaments' ? (
+              <div className="mt-4 space-y-3">
+                <form onSubmit={handleCreateTournament} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                  <input value={tournamentForm.title} onChange={(event) => setTournamentForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="대회 제목" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <input type="date" value={tournamentForm.eventDate} onChange={(event) => setTournamentForm((prev) => ({ ...prev, eventDate: event.target.value }))} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <input value={tournamentForm.players} onChange={(event) => setTournamentForm((prev) => ({ ...prev, players: event.target.value }))} placeholder="참가자 이름(쉼표로 구분)" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
+                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">대회 생성</button>
+                </form>
+                {tournaments.map((tournament) => (
+                  <div key={tournament.id} className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
+                    <p className="font-semibold text-gray-900">{tournament.title}</p>
+                    <p className="mt-1">일시: {tournament.eventDate}</p>
+                    <p className="mt-1">상태: {tournament.status}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       </main>
