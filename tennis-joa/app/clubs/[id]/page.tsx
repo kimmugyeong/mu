@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Bell,
   CalendarDays,
@@ -17,9 +19,9 @@ import {
 } from "lucide-react";
 
 type ClubPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 const tabs = [
@@ -27,10 +29,13 @@ const tabs = [
   { id: "notice", label: "공지사항", icon: Bell },
   { id: "tournament", label: "월례회", icon: Trophy },
   { id: "matches", label: "경기전적", icon: CalendarDays },
-  { id: "merch", label: "단체복", icon: ShoppingBag },
+  { id: "merch", label: "단체복", icon: ShoppingBag, href: "/merchandise" },
 ];
 
 export default function ClubPage({ params }: ClubPageProps) {
+  const resolvedParams = use(params);
+  const clubId = resolvedParams.id;
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
 
   const club = {
@@ -85,7 +90,7 @@ export default function ClubPage({ params }: ClubPageProps) {
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white">
                   <Users className="h-5 w-5" />
                 </span>
-                <span>클럽 ID: {params.id}</span>
+                <span>클럽 ID: {clubId}</span>
               </div>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-3xl font-black text-white shadow-lg shadow-slate-900/20">
@@ -165,11 +170,15 @@ export default function ClubPage({ params }: ClubPageProps) {
             value: `${club.merchCount}건`,
             icon: ShoppingBag,
             tone: "bg-cyan-50 text-cyan-700",
+            href: `/clubs/${clubId}/merchandise`,
           },
         ].map((item) => (
           <article
             key={item.title}
-            className="group rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            onClick={() => item.href && router.push(item.href)}
+            className={`group rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md ${
+              item.href ? "cursor-pointer" : ""
+            }`}
           >
             <div className={`inline-flex h-12 w-12 items-center justify-center rounded-3xl ${item.tone}`}>
               <item.icon className="h-6 w-6" />
@@ -194,7 +203,13 @@ export default function ClubPage({ params }: ClubPageProps) {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    if (tab.id === "merch") {
+                      router.push(`/clubs/${clubId}/merchandise`);
+                    } else {
+                      setActiveTab(tab.id);
+                    }
+                  }}
                   className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
                     active
                       ? "border-emerald-500 bg-emerald-50 text-emerald-700"

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus, Shirt, ChevronRight, Lock } from "lucide-react";
 import { validateClubInput } from "@/lib/clubValidation";
 
 type Mode = "login" | "signup";
@@ -49,6 +51,7 @@ const initialClubForm: ClubFormState = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [view, setView] = useState<ViewMode>("auth");
   const [form, setForm] = useState<FormState>(initialForm);
@@ -520,8 +523,19 @@ export default function Home() {
 
           {/* Stat Cards */}
           <div className="grid grid-cols-2 gap-3">
-            {clubStats.map((item) => (
-              <article key={item.title} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4">
+            {[
+              { title: "전체 멤버", value: clubs.length ? clubs.length : 128, icon: Users, tone: "bg-emerald-50 text-emerald-700", href: null },
+              { title: "이번 달 월례회", value: "3회", icon: Trophy, tone: "bg-lime-50 text-lime-800", href: null },
+              { title: "공지사항", value: `${notices.length || 8}건`, icon: Bell, tone: "bg-teal-50 text-teal-700", href: null },
+              { title: "단체복 공제", value: `${merchandises.length || 4}건`, icon: ShoppingBag, tone: "bg-emerald-50 text-emerald-700", href: `/clubs/${selectedClub.id}/merchandise` },
+            ].map((item) => (
+              <article
+                key={item.title}
+                onClick={() => item.href && router.push(item.href)}
+                className={`bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 ${
+                  item.href ? "cursor-pointer" : ""
+                }`}
+              >
                 <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${item.tone}`}>
                   <item.icon className="h-4 w-4" />
                 </div>
@@ -545,7 +559,7 @@ export default function Home() {
                 { id: "notices", label: "공지사항", icon: Bell },
                 { id: "tournament", label: "월례회", icon: Trophy },
                 { id: "matches", label: "경기전적", icon: CalendarDays },
-                { id: "merch", label: "단체복", icon: ShoppingBag },
+                { id: "merch", label: "단체복", icon: ShoppingBag, href: `/clubs/${selectedClub.id}/merchandise` },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -553,7 +567,13 @@ export default function Home() {
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => {
+                      if (tab.href) {
+                        router.push(tab.href);
+                      } else {
+                        setActiveTab(tab.id as any);
+                      }
+                    }}
                     className={`inline-flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs transition ${
                       isActive
                         ? "bg-emerald-600 text-white font-semibold shadow-sm"
@@ -570,83 +590,132 @@ export default function Home() {
 
           {/* Tab Specific Content */}
           <div className="space-y-4">
-            {/* Notice Section */}
-            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
-                  필독 공지
-                </span>
-                <span className="text-xs text-slate-400 font-medium">2026-08-07</span>
-              </div>
-              <h3 className="mt-3 text-base font-bold text-slate-900">월례회 준비물 및 코트 에티켓 안내</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                이번 주 월례회 참가자는 라켓, 테니스화, 음료수를 지참해 주시고 정시 10분 전 코트에 도착 부탁드립니다.
-              </p>
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span>작성자: 운영진</span>
-                <span className="text-emerald-600 font-semibold cursor-pointer hover:underline">자세히 보기 →</span>
-              </div>
-            </article>
-
-            {/* Upcoming Event Card */}
-            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-slate-400 font-medium">다음 월례회</span>
-                  <h3 className="mt-1 text-base font-bold text-slate-900">{upcomingEvent.title}</h3>
-                </div>
-                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
-                  {upcomingEvent.day}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
-                <p className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.datetime}</p>
-                <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.location}</p>
-              </div>
-              <button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm py-2.5 text-xs transition flex items-center justify-center gap-1.5">
-                <CalendarDays className="h-4 w-4" /> 참가 신청하기
-              </button>
-            </article>
-
-            {/* Recent Match Card */}
-            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-slate-900">최근 경기 전적</h3>
-                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
-                  {recentMatch.result}
-                </span>
-              </div>
-              <p className="mt-2 text-xs font-mono font-semibold text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
-                스코어: {recentMatch.score}
-              </p>
-              <p className="mt-2 text-xs text-slate-500">{recentMatch.summary}</p>
-            </article>
-
-            {/* Club Members Card */}
-            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-bold text-slate-900">신규 가입 멤버</h3>
-                <span className="text-xs text-slate-400">최근 7일</span>
-              </div>
-              <div className="space-y-2">
-                {recentMembers.map((member) => (
-                  <div key={member.name} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs">
-                        {member.name.slice(0, 1)}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900">{member.name}</p>
-                        <p className="text-[10px] text-slate-400">{member.joined}</p>
-                      </div>
+            {activeTab === "merch" ? (
+              <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+                      <Shirt className="h-4 w-4" />
                     </div>
-                    <button className="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg transition">
-                      환영하기
-                    </button>
+                    <h3 className="text-base font-bold text-slate-900">단체복 구매 수요조사</h3>
                   </div>
-                ))}
-              </div>
-            </article>
+                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                    {merchandises.length}개 진행중
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                  클럽 단체복 수요조사에 참여하고 필요한 옵션을 선택해보세요.
+                </p>
+
+                {merchandises.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {merchandises.slice(0, 3).map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-200 flex-shrink-0">
+                            {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-slate-400 text-xs">의류</div>}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{item.name}</p>
+                            <p className="text-[11px] font-semibold text-emerald-700">{item.price?.toLocaleString()}원</p>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.status === "OPEN" ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"}`}>
+                          {item.status === "OPEN" ? "수요조사중" : "마감"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Link
+                  href={`/clubs/${selectedClub.id}/merchandise`}
+                  className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold py-3 text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <Shirt className="h-4 w-4" /> 단체복 수요조사 페이지로 이동 <ChevronRight className="h-4 w-4" />
+                </Link>
+              </article>
+            ) : (
+              <>
+                {/* Notice Section */}
+                <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                      필독 공지
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">2026-08-07</span>
+                  </div>
+                  <h3 className="mt-3 text-base font-bold text-slate-900">월례회 준비물 및 코트 에티켓 안내</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    이번 주 월례회 참가자는 라켓, 테니스화, 음료수를 지참해 주시고 정시 10분 전 코트에 도착 부탁드립니다.
+                  </p>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span>작성자: 운영진</span>
+                    <span className="text-emerald-600 font-semibold cursor-pointer hover:underline">자세히 보기 →</span>
+                  </div>
+                </article>
+
+                {/* Upcoming Event Card */}
+                <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-slate-400 font-medium">다음 월례회</span>
+                      <h3 className="mt-1 text-base font-bold text-slate-900">{upcomingEvent.title}</h3>
+                    </div>
+                    <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                      {upcomingEvent.day}
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
+                    <p className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.datetime}</p>
+                    <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.location}</p>
+                  </div>
+                  <button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm py-2.5 text-xs transition flex items-center justify-center gap-1.5">
+                    <CalendarDays className="h-4 w-4" /> 참가 신청하기
+                  </button>
+                </article>
+
+                {/* Recent Match Card */}
+                <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-bold text-slate-900">최근 경기 전적</h3>
+                    <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                      {recentMatch.result}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs font-mono font-semibold text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
+                    스코어: {recentMatch.score}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">{recentMatch.summary}</p>
+                </article>
+
+                {/* Club Members Card */}
+                <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-bold text-slate-900">신규 가입 멤버</h3>
+                    <span className="text-xs text-slate-400">최근 7일</span>
+                  </div>
+                  <div className="space-y-2">
+                    {recentMembers.map((member) => (
+                      <div key={member.name} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs">
+                            {member.name.slice(0, 1)}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{member.name}</p>
+                            <p className="text-[10px] text-slate-400">{member.joined}</p>
+                          </div>
+                        </div>
+                        <button className="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg transition">
+                          환영하기
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              </>
+            )}
           </div>
         </section>
       </main>
