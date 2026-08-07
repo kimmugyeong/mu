@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus } from "lucide-react";
 import { validateClubInput } from "@/lib/clubValidation";
 
 type Mode = "login" | "signup";
@@ -442,123 +443,224 @@ export default function Home() {
   }
 
   if (view === "club" && selectedClub) {
-    return (
-      <main className="flex-1 bg-gray-50 px-5 py-6 text-gray-900">
-        <section className="space-y-4">
-          <button
-            type="button"
-            onClick={goToClubs}
-            className="text-sm font-medium text-teal-700"
-          >
-            ← 클럽 목록으로
-          </button>
+    const clubStats = [
+      { title: "전체 멤버", value: clubs.length ? clubs.length : 128, icon: Users, tone: "bg-emerald-50 text-emerald-700" },
+      { title: "이번 달 월례회", value: "3회", icon: Trophy, tone: "bg-teal-50 text-teal-700" },
+      { title: "공지사항", value: `${notices.length || 8}건`, icon: Bell, tone: "bg-slate-50 text-slate-700" },
+      { title: "단체복 공제", value: `${merchandises.length || 4}건`, icon: ShoppingBag, tone: "bg-cyan-50 text-cyan-700" },
+    ];
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-teal-600">클럽 메인</p>
-            <h1 className="mt-2 text-2xl font-semibold">{selectedClub.name}</h1>
-            <p className="mt-2 text-sm text-gray-600">{selectedClub.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-teal-100 px-3 py-1 text-sm text-teal-700">{selectedClub.address}</span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.city}</span>
-              {selectedClub.contactPhone ? <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.contactPhone}</span> : null}
-              {selectedClub.contactEmail ? <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{selectedClub.contactEmail}</span> : null}
+    const recentMembers = [
+      { name: "강지훈", joined: "2일 전" },
+      { name: "박수진", joined: "5일 전" },
+      { name: "이민재", joined: "1주일 전" },
+      { name: "정다운", joined: "1주일 전" },
+    ];
+
+    const upcomingEvent = {
+      title: "8월 월례회 대회",
+      day: "D-5",
+      datetime: "8월 22일 토요일 · 14:00",
+      location: `${selectedClub.address} ${selectedClub.city}`,
+    };
+
+    const recentMatch = {
+      result: "승 3 / 패 1",
+      score: "6-3, 4-6, 10-8",
+      summary: "최근 월례회 경기에서 치열한 역전승을 거두었습니다.",
+    };
+
+    return (
+      <main className="flex-1 bg-slate-50 px-5 py-6 text-slate-900 sm:px-6 lg:px-8">
+        <section className="space-y-6">
+          <div className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-emerald-600 to-teal-800 p-6 text-white shadow-2xl shadow-slate-950/10 sm:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-white/15 bg-white/10 text-3xl font-black text-white shadow-lg shadow-slate-950/20">
+                    {selectedClub.name.slice(0, 1)}
+                  </div>
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.3em] text-teal-100/80">클럽 헤더</p>
+                    <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{selectedClub.name}</h1>
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-100/90">{selectedClub.description}</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">멤버</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{clubStats[0].value}</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">월례회</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">3회</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">관리자</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{loggedInUser?.name ?? "관리자"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 sm:w-auto">
+                <button className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
+                  <Settings2 className="h-4 w-4" /> 클럽 설정
+                </button>
+                <button className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
+                  <Share2 className="h-4 w-4" /> 초대 링크 복사
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2">
-              {([['notices','공지사항'], ['merch','단체복'], ['matches','경기전적'], ['tournaments','월례회']] as const).map(([key,label]) => (
-                <button key={key} type="button" onClick={() => setActiveTab(key)} className={`rounded-full px-3 py-1.5 text-sm font-medium ${activeTab === key ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                  {label}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {clubStats.map((item) => (
+              <article key={item.title} className="group rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-3xl ${item.tone}`}>
+                  <item.icon className="h-6 w-6" />
+                </div>
+                <p className="mt-4 text-sm text-slate-500">{item.title}</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
+              </article>
+            ))}
+          </div>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">메인 탭</p>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900">클럽 대시보드</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "notices", label: "공지사항", icon: Bell },
+                  { id: "tournament", label: "월례회", icon: Trophy },
+                  { id: "matches", label: "경기전적", icon: CalendarDays },
+                  { id: "merch", label: "단체복", icon: ShoppingBag },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${isActive ? "border border-emerald-500 bg-emerald-50 text-emerald-700" : "border border-transparent bg-slate-100 text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-6 lg:grid-cols-[1.75fr_1fr]">
+            <div className="space-y-6">
+              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최신 필독 공지사항</p>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900">월례회 준비물 및 일정 안내</h3>
+                  </div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" /> 필독
+                  </span>
+                </div>
+                <p className="mt-4 text-sm leading-7 text-slate-600">이번 월례회 전 참가자는 운동화, 물, 개인 라켓을 반드시 준비하시고 10분 전에 도착해 주세요.</p>
+                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                  <span className="rounded-full bg-slate-100 px-3 py-2">발행일: 2026-08-07</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-2">작성자: 운영진</span>
+                </div>
+              </article>
+
+              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">다가오는 일정</p>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900">{upcomingEvent.title}</h3>
+                  </div>
+                  <span className="rounded-3xl bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">{upcomingEvent.day}</span>
+                </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-sm text-slate-500">일시</p>
+                    <p className="mt-2 text-base font-semibold text-slate-900">{upcomingEvent.datetime}</p>
+                  </div>
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-sm text-slate-500">장소</p>
+                    <p className="mt-2 flex items-center gap-2 text-base font-semibold text-slate-900"><MapPin className="h-4 w-4 text-teal-600" />{upcomingEvent.location}</p>
+                  </div>
+                </div>
+                <button className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                  <CalendarDays className="h-4 w-4" /> 참가 신청
                 </button>
-              ))}
+              </article>
+
+              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최근 경기 결과</p>
+                    <h3 className="mt-3 text-xl font-bold text-slate-900">{recentMatch.result}</h3>
+                  </div>
+                  <span className="rounded-3xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">{recentMatch.score}</span>
+                </div>
+                <p className="mt-4 text-sm leading-7 text-slate-600">{recentMatch.summary}</p>
+                <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
+                  <span className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"><MessageCircle className="h-4 w-4 text-slate-400" /> 최근 경기 요약</span>
+                  <span className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"><Users className="h-4 w-4 text-slate-400" /> 5명 참가</span>
+                </div>
+              </article>
             </div>
 
-            {activeTab === 'notices' ? (
-              <div className="mt-4 space-y-3">
-                {loggedInUser?.isAdmin ? (
-                  <form onSubmit={handleCreateNotice} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-                    <input value={noticeForm.title} onChange={(event) => setNoticeForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="공지 제목" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    <textarea value={noticeForm.content} onChange={(event) => setNoticeForm((prev) => ({ ...prev, content: event.target.value }))} placeholder="공지 내용을 입력하세요" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={3} />
-                    <label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" checked={noticeForm.isImportant} onChange={(event) => setNoticeForm((prev) => ({ ...prev, isImportant: event.target.checked }))} /> 필독 공지</label>
-                    <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">공지 등록</button>
-                  </form>
-                ) : null}
-                {notices.map((notice) => (
-                  <div key={notice.id} className="rounded-2xl border border-gray-200 bg-white p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">{notice.title}</h3>
-                      {notice.isImportant ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-700">필독</span> : null}
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">{notice.content}</p>
+            <aside className="space-y-6">
+              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">클럽 정보</p>
+                    <h3 className="mt-3 text-lg font-bold text-slate-900">매너 수칙 & 안내</h3>
                   </div>
-                ))}
-              </div>
-            ) : null}
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">추천</span>
+                </div>
+                <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600">
+                  <p className="inline-flex items-center gap-2 text-slate-700"><MapPin className="h-4 w-4 text-teal-600" /> 코트 위치: {selectedClub.address}, {selectedClub.city}</p>
+                  <p className="inline-flex items-center gap-2 text-slate-700"><MessageCircle className="h-4 w-4 text-teal-600" /> 단톡방: <a href="#" className="font-semibold text-teal-700 hover:underline">바로가기</a></p>
+                </div>
+                <div className="mt-6 space-y-3 rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
+                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 매너를 준수하며 경기를 진행합니다.</p>
+                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 개인 장비는 스스로 관리합니다.</p>
+                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 정시에 도착하여 러닝 시간을 준수합니다.</p>
+                </div>
+              </article>
 
-            {activeTab === 'merch' ? (
-              <div className="mt-4 space-y-3">
-                {loggedInUser?.isAdmin ? (
-                  <form onSubmit={handleCreateMerch} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-                    <input value={merchForm.name} onChange={(event) => setMerchForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="상품명" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    <input value={merchForm.price} onChange={(event) => setMerchForm((prev) => ({ ...prev, price: event.target.value }))} placeholder="가격" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    <input value={merchForm.sizes} onChange={(event) => setMerchForm((prev) => ({ ...prev, sizes: event.target.value }))} placeholder="사이즈(예: S,M,L)" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    <textarea value={merchForm.description} onChange={(event) => setMerchForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="설명" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={2} />
-                    <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">상품 등록</button>
-                  </form>
-                ) : null}
-                {merchandises.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-gray-200 bg-white p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                      <span className="text-sm font-medium text-teal-700">{item.price.toLocaleString()}원</span>
+              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최근 가입 멤버</p>
+                    <h3 className="mt-3 text-lg font-bold text-slate-900">최근 가입자</h3>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">최근 7일</span>
+                </div>
+                <div className="mt-6 space-y-4">
+                  {recentMembers.map((member) => (
+                    <div key={member.name} className="flex items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-slate-50 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">{member.name.slice(0, 1)}</div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{member.name}</p>
+                          <p className="text-xs text-slate-500">{member.joined}</p>
+                        </div>
+                      </div>
+                      <button className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">
+                        <UserPlus className="h-3.5 w-3.5" /> 환영
+                      </button>
                     </div>
-                    <p className="mt-2 text-sm text-gray-600">{item.description}</p>
-                    <p className="mt-2 text-sm text-gray-500">사이즈: {item.sizes?.join(', ')}</p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {activeTab === 'matches' ? (
-              <div className="mt-4 space-y-3">
-                <form onSubmit={handleCreateMatch} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-                  <input value={matchForm.opponent1Name} onChange={(event) => setMatchForm((prev) => ({ ...prev, opponent1Name: event.target.value }))} placeholder="상대 1" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <input value={matchForm.opponent2Name} onChange={(event) => setMatchForm((prev) => ({ ...prev, opponent2Name: event.target.value }))} placeholder="상대 2" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <input value={matchForm.score} onChange={(event) => setMatchForm((prev) => ({ ...prev, score: event.target.value }))} placeholder="세트 스코어" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <label className="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" checked={matchForm.isWin} onChange={(event) => setMatchForm((prev) => ({ ...prev, isWin: event.target.checked }))} /> 승리</label>
-                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">경기 결과 등록</button>
-                </form>
-                {matches.map((match) => (
-                  <div key={match.id} className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
-                    <div className="flex items-center justify-between">
-                      <span>{match.matchType}</span>
-                      <span>{match.isWin ? '승' : '패'}</span>
-                    </div>
-                    <p className="mt-2">대전: {match.opponent1Name} / {match.opponent2Name}</p>
-                    <p className="mt-1">점수: {match.score}</p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {activeTab === 'tournaments' ? (
-              <div className="mt-4 space-y-3">
-                <form onSubmit={handleCreateTournament} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-                  <input value={tournamentForm.title} onChange={(event) => setTournamentForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="대회 제목" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <input type="date" value={tournamentForm.eventDate} onChange={(event) => setTournamentForm((prev) => ({ ...prev, eventDate: event.target.value }))} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <input value={tournamentForm.players} onChange={(event) => setTournamentForm((prev) => ({ ...prev, players: event.target.value }))} placeholder="참가자 이름(쉼표로 구분)" className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">대회 생성</button>
-                </form>
-                {tournaments.map((tournament) => (
-                  <div key={tournament.id} className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700">
-                    <p className="font-semibold text-gray-900">{tournament.title}</p>
-                    <p className="mt-1">일시: {tournament.eventDate}</p>
-                    <p className="mt-1">상태: {tournament.status}</p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+                  ))}
+                </div>
+              </article>
+            </aside>
           </div>
         </section>
       </main>
