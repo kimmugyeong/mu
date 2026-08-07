@@ -22,7 +22,6 @@ model User {
   wonMatches     Match[] @relation("Winner")
 
   notices               ClubNotice[]
-  orders                Order[]
   matchRecordsAsPlayer1 MatchRecord[]      @relation("MatchPlayer1")
   matchRecordsAsPlayer2 MatchRecord[]      @relation("MatchPlayer2")
   tournamentPlayers     TournamentPlayer[]
@@ -63,7 +62,6 @@ model Club {
 
   notices      ClubNotice[]
   merchandises Merchandise[]
-  orders       Order[]
   matchRecords MatchRecord[]
   tournaments  MonthlyTournament[]
 }
@@ -82,45 +80,29 @@ model ClubNotice {
 }
 
 model Merchandise {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   clubId      String
-  club        Club     @relation(fields: [clubId], references: [id])
-  name        String
-  description String?
-  price       Int
-  imageUrl    String?
-  colors      String[]
-  sizes       String[]
-  createdAt   DateTime @default(now())
-
-  orders            Order[]
-  merchandiseOrders MerchandiseOrder[]
-}
-
-model Order {
-  id            String      @id @default(cuid())
-  clubId        String
-  club          Club        @relation(fields: [clubId], references: [id])
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
-  merchandiseId String
-  merchandise   Merchandise @relation(fields: [merchandiseId], references: [id])
-  selectedSize  String
-  selectedColor String?
-  quantity      Int         @default(1)
-  status        String      @default("PENDING")
-  createdAt     DateTime    @default(now())
+  club        Club               @relation(fields: [clubId], references: [id])
+  name        String             // 상품명 (예: 2026 봄 시즌 단체 카라티)
+  description String?            // 상품 설명 및 안내사항
+  price       Int                // 예상 가격 (원)
+  imageUrl    String?            // 이미지 URL
+  colors      String[]           // 선택 가능 색상 목록 (예: ["화이트", "네이비"])
+  sizes       String[]           // 선택 가능 사이즈 목록 (예: ["95(M)", "100(L)", "105(XL)"])
+  status      String             @default("OPEN") // OPEN(수요조사중), CLOSED(마감)
+  createdAt   DateTime           @default(now())
+  orders      MerchandiseOrder[]
 }
 
 model MerchandiseOrder {
   id            String      @id @default(cuid())
   merchandiseId String
-  merchandise   Merchandise @relation(fields: [merchandiseId], references: [id])
-  userId        String?
-  selectedColor String?
-  selectedSize  String?
-  quantity      Int         @default(1)
-  status        String      @default("PENDING")
+  merchandise   Merchandise @relation(fields: [merchandiseId], references: [id], onDelete: Cascade)
+  userId        String
+  userName      String?     // 신청자 이름/닉네임
+  selectedColor String      // 선택한 색상
+  selectedSize  String      // 선택한 사이즈
+  quantity      Int         @default(1) // 수량
   createdAt     DateTime    @default(now())
 }
 
