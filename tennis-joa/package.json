@@ -3,18 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-"scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && next build",
-  "start": "next start",
-  "lint": "next lint",
-  "test": "node --test"
-},
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
+    "lucide-react": "^1.29.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
