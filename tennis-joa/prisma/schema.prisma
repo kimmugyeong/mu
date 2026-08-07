@@ -92,6 +92,7 @@ model Merchandise {
   description  String?
   price        Int
   imageUrl     String?
+  colors       String[]
   sizes        String[]
   createdAt    DateTime @default(now())
 
@@ -107,6 +108,7 @@ model Order {
   merchandiseId   String
   merchandise     Merchandise @relation(fields: [merchandiseId], references: [id])
   selectedSize    String
+  selectedColor   String?
   quantity        Int      @default(1)
   status          String   @default("PENDING")
   createdAt       DateTime @default(now())
