@@ -20,16 +20,24 @@ export default function BottomNav({ clubId }: Props) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-sm lg:hidden">
-      <ul className="mx-auto flex max-w-xl justify-between px-4 py-2">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md sm:max-w-lg z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md shadow-lg py-1 px-2 rounded-t-2xl">
+      <ul className="flex justify-around items-center">
         {items.map((item) => {
           const active = pathname === item.href || pathname?.startsWith(item.href + "/");
           const Icon = item.icon;
           return (
             <li key={item.href} className="flex-1 text-center">
-              <Link href={item.href} className={`inline-flex flex-col items-center gap-1 py-1 text-xs ${active ? 'text-emerald-600' : 'text-slate-600'}`}>
-                <Icon className={`h-5 w-5 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className={`text-[11px] ${active ? 'font-semibold' : ''}`}>{item.label}</span>
+              <Link
+                href={item.href}
+                className={`relative inline-flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
+                  active ? "text-emerald-700 font-bold" : "text-slate-400 hover:text-slate-600 font-medium"
+                }`}
+              >
+                {active && (
+                  <span className="absolute -top-1 w-6 h-1 bg-lime-400 rounded-full shadow-sm" />
+                )}
+                <Icon className={`h-5 w-5 ${active ? "text-emerald-600" : "text-slate-400"}`} />
+                <span className="text-[11px] tracking-tight">{item.label}</span>
               </Link>
             </li>
           );
@@ -38,3 +46,4 @@ export default function BottomNav({ clubId }: Props) {
     </nav>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus } from "lucide-react";
@@ -345,73 +345,88 @@ export default function Home() {
 
   if (view === "clubs") {
     return (
-      <main className="flex-1 bg-gray-50 px-5 py-6 text-gray-900">
+      <main className="flex-1 bg-slate-50 px-4 py-6 text-slate-900 space-y-5">
         <section className="space-y-5">
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-teal-600">환영합니다</p>
-            <h1 className="mt-2 text-2xl font-semibold">{loggedInUser?.name ?? "회원"}님</h1>
-            <p className="mt-2 text-sm text-gray-500">클럽을 탐색하고, 가입된 클럽을 확인해 보세요.</p>
+          {/* Welcome Banner Card */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+            <div className="flex items-center justify-between">
+              <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                🎾 테니스 클럽 포털
+              </span>
+              <span className="text-xs text-slate-400 font-medium">Tennis Joa</span>
+            </div>
+            <h1 className="mt-3 text-2xl font-bold text-slate-900">
+              {loggedInUser?.name ?? "회원"}님, 반갑습니다!
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              클럽을 탐색하거나 가입된 테니스 클럽 대시보드로 이동하세요.
+            </p>
           </div>
 
           {status ? (
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 text-sm text-emerald-800 font-medium flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               {status}
             </div>
           ) : null}
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+          {/* Club Finder Card */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">클럽 찾기</h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">클럽 찾기</h2>
+                <p className="text-xs text-slate-500 mt-0.5">등록된 동호회 목록입니다.</p>
+              </div>
               {loggedInUser?.isAdmin ? (
                 <button
                   type="button"
                   onClick={() => setShowCreateForm((prev) => !prev)}
-                  className="rounded-full bg-teal-600 px-3 py-1.5 text-sm font-medium text-white"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm px-3.5 py-1.5 text-xs transition"
                 >
-                  {showCreateForm ? "닫기" : "클럽 생성"}
+                  {showCreateForm ? "닫기" : "+ 클럽 생성"}
                 </button>
               ) : null}
             </div>
 
             {showCreateForm ? (
-              <form onSubmit={handleCreateClub} className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+              <form onSubmit={handleCreateClub} className="mt-4 space-y-3 bg-slate-50 rounded-2xl border border-slate-200 p-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">클럽 이름</label>
-                  <input value={clubForm.name} onChange={(event) => updateClubField("name", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  {clubErrors.name ? <p className="mt-1 text-sm text-red-500">{clubErrors.name}</p> : null}
+                  <label className="block text-xs font-semibold text-slate-700">클럽 이름</label>
+                  <input value={clubForm.name} onChange={(event) => updateClubField("name", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" placeholder="예: 그린코트 테니스 클럽" />
+                  {clubErrors.name ? <p className="mt-1 text-xs text-red-500">{clubErrors.name}</p> : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">주소</label>
-                  <input value={clubForm.address} onChange={(event) => updateClubField("address", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  {clubErrors.address ? <p className="mt-1 text-sm text-red-500">{clubErrors.address}</p> : null}
+                  <label className="block text-xs font-semibold text-slate-700">주소</label>
+                  <input value={clubForm.address} onChange={(event) => updateClubField("address", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" placeholder="예: 서울 강남구 테헤란로 123" />
+                  {clubErrors.address ? <p className="mt-1 text-xs text-red-500">{clubErrors.address}</p> : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">도시</label>
-                  <input value={clubForm.city} onChange={(event) => updateClubField("city", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                  {clubErrors.city ? <p className="mt-1 text-sm text-red-500">{clubErrors.city}</p> : null}
+                  <label className="block text-xs font-semibold text-slate-700">도시</label>
+                  <input value={clubForm.city} onChange={(event) => updateClubField("city", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" placeholder="예: 서울" />
+                  {clubErrors.city ? <p className="mt-1 text-xs text-red-500">{clubErrors.city}</p> : null}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">클럽 소개</label>
-                  <textarea value={clubForm.description} onChange={(event) => updateClubField("description", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" rows={3} />
-                  {clubErrors.description ? <p className="mt-1 text-sm text-red-500">{clubErrors.description}</p> : null}
+                  <label className="block text-xs font-semibold text-slate-700">클럽 소개</label>
+                  <textarea value={clubForm.description} onChange={(event) => updateClubField("description", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" rows={2} placeholder="클럽 소개 및 모임 시간 안내" />
+                  {clubErrors.description ? <p className="mt-1 text-xs text-red-500">{clubErrors.description}</p> : null}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">연락처</label>
-                    <input value={clubForm.contactPhone} onChange={(event) => updateClubField("contactPhone", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    {clubErrors.contactPhone ? <p className="mt-1 text-sm text-red-500">{clubErrors.contactPhone}</p> : null}
+                    <label className="block text-xs font-semibold text-slate-700">연락처</label>
+                    <input value={clubForm.contactPhone} onChange={(event) => updateClubField("contactPhone", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" placeholder="010-0000-0000" />
+                    {clubErrors.contactPhone ? <p className="mt-1 text-xs text-red-500">{clubErrors.contactPhone}</p> : null}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">이메일</label>
-                    <input value={clubForm.contactEmail} onChange={(event) => updateClubField("contactEmail", event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2" />
-                    {clubErrors.contactEmail ? <p className="mt-1 text-sm text-red-500">{clubErrors.contactEmail}</p> : null}
+                    <label className="block text-xs font-semibold text-slate-700">이메일</label>
+                    <input value={clubForm.contactEmail} onChange={(event) => updateClubField("contactEmail", event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600" placeholder="club@example.com" />
+                    {clubErrors.contactEmail ? <p className="mt-1 text-xs text-red-500">{clubErrors.contactEmail}</p> : null}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white">생성</button>
-                  <button type="button" onClick={() => { setShowCreateForm(false); setClubForm(initialClubForm); setClubErrors({}); setClubStatus(""); }} className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700">취소</button>
+                <div className="flex gap-2 pt-1">
+                  <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm px-4 py-2 text-xs transition">생성 완료</button>
+                  <button type="button" onClick={() => { setShowCreateForm(false); setClubForm(initialClubForm); setClubErrors({}); setClubStatus(""); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">취소</button>
                 </div>
-                {clubStatus ? <p className="text-sm text-gray-600">{clubStatus}</p> : null}
+                {clubStatus ? <p className="text-xs text-emerald-700 font-medium">{clubStatus}</p> : null}
               </form>
             ) : null}
 
@@ -421,18 +436,18 @@ export default function Home() {
                   key={club.id}
                   type="button"
                   onClick={() => openClub(club)}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left"
+                  className="w-full text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 group"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900">{club.name}</p>
-                      <p className="mt-1 text-sm text-gray-500">{club.address} · {club.city}</p>
+                      <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{club.name}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{club.address} · {club.city}</p>
                     </div>
-                    <span className="rounded-full bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-700">
-                      새 클럽
+                    <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                      입장하기 →
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-gray-600">{club.description}</p>
+                  <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">{club.description}</p>
                 </button>
               ))}
             </div>
@@ -445,9 +460,9 @@ export default function Home() {
   if (view === "club" && selectedClub) {
     const clubStats = [
       { title: "전체 멤버", value: clubs.length ? clubs.length : 128, icon: Users, tone: "bg-emerald-50 text-emerald-700" },
-      { title: "이번 달 월례회", value: "3회", icon: Trophy, tone: "bg-teal-50 text-teal-700" },
-      { title: "공지사항", value: `${notices.length || 8}건`, icon: Bell, tone: "bg-slate-50 text-slate-700" },
-      { title: "단체복 공제", value: `${merchandises.length || 4}건`, icon: ShoppingBag, tone: "bg-cyan-50 text-cyan-700" },
+      { title: "이번 달 월례회", value: "3회", icon: Trophy, tone: "bg-lime-50 text-lime-800" },
+      { title: "공지사항", value: `${notices.length || 8}건`, icon: Bell, tone: "bg-teal-50 text-teal-700" },
+      { title: "단체복 공제", value: `${merchandises.length || 4}건`, icon: ShoppingBag, tone: "bg-emerald-50 text-emerald-700" },
     ];
 
     const recentMembers = [
@@ -471,216 +486,192 @@ export default function Home() {
     };
 
     return (
-      <main className="flex-1 bg-slate-50 px-5 py-6 text-slate-900 sm:px-6 lg:px-8">
-        <section className="space-y-6">
-          <div className="overflow-hidden rounded-[2rem] bg-gradient-to-r from-emerald-600 to-teal-800 p-6 text-white shadow-2xl shadow-slate-950/10 sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-6">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-white/15 bg-white/10 text-3xl font-black text-white shadow-lg shadow-slate-950/20">
-                    {selectedClub.name.slice(0, 1)}
-                  </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.3em] text-teal-100/80">클럽 헤더</p>
-                    <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{selectedClub.name}</h1>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-100/90">{selectedClub.description}</p>
-                  </div>
-                </div>
+      <main className="flex-1 bg-slate-50 px-4 py-6 text-slate-900 space-y-5">
+        <button
+          type="button"
+          onClick={goToClubs}
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/60 transition"
+        >
+          ← 클럽 목록으로 돌아가기
+        </button>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">멤버</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{clubStats[0].value}</p>
-                  </div>
-                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">월례회</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">3회</p>
-                  </div>
-                  <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-4 shadow-sm backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.28em] text-teal-100/75">관리자</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{loggedInUser?.name ?? "관리자"}</p>
-                  </div>
+        <section className="space-y-5">
+          {/* Main Hero Header Card with Emerald-600 & Teal-700 Gradient */}
+          <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-teal-800 p-5 text-white shadow-md border border-emerald-500/20">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                  🎾 공식 클럽
+                </span>
+                <span className="text-xs text-teal-100/80 font-mono">ID: {selectedClub.id.slice(0, 6)}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-2xl font-black text-white shadow-inner">
+                  {selectedClub.name.slice(0, 1)}
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">{selectedClub.name}</h1>
+                  <p className="mt-0.5 text-xs text-teal-100/90">{selectedClub.city} · {selectedClub.address}</p>
                 </div>
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 sm:w-auto">
-                <button className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
-                  <Settings2 className="h-4 w-4" /> 클럽 설정
-                </button>
-                <button className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
-                  <Share2 className="h-4 w-4" /> 초대 링크 복사
-                </button>
-              </div>
+              <p className="text-xs leading-relaxed text-slate-100/90 bg-black/10 rounded-xl p-3 backdrop-blur-xs">{selectedClub.description}</p>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 gap-3">
             {clubStats.map((item) => (
-              <article key={item.title} className="group rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-3xl ${item.tone}`}>
-                  <item.icon className="h-6 w-6" />
+              <article key={item.title} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4">
+                <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${item.tone}`}>
+                  <item.icon className="h-4 w-4" />
                 </div>
-                <p className="mt-4 text-sm text-slate-500">{item.title}</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
+                <p className="mt-2 text-xs font-medium text-slate-500">{item.title}</p>
+                <p className="mt-0.5 text-xl font-bold text-slate-900">{item.value}</p>
               </article>
             ))}
           </div>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">메인 탭</p>
-                <h2 className="mt-2 text-2xl font-bold text-slate-900">클럽 대시보드</h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: "notices", label: "공지사항", icon: Bell },
-                  { id: "tournament", label: "월례회", icon: Trophy },
-                  { id: "matches", label: "경기전적", icon: CalendarDays },
-                  { id: "merch", label: "단체복", icon: ShoppingBag },
-                ].map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${isActive ? "border border-emerald-500 bg-emerald-50 text-emerald-700" : "border border-transparent bg-slate-100 text-slate-600 hover:bg-slate-50"}`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Main Dashboard Navigation Tabs */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-base font-bold text-slate-900">클럽 대시보드</h2>
+              <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                실시간 업데이트
+              </span>
             </div>
-          </section>
-
-          <div className="grid gap-6 lg:grid-cols-[1.75fr_1fr]">
-            <div className="space-y-6">
-              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최신 필독 공지사항</p>
-                    <h3 className="mt-3 text-xl font-bold text-slate-900">월례회 준비물 및 일정 안내</h3>
-                  </div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" /> 필독
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-slate-600">이번 월례회 전 참가자는 운동화, 물, 개인 라켓을 반드시 준비하시고 10분 전에 도착해 주세요.</p>
-                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                  <span className="rounded-full bg-slate-100 px-3 py-2">발행일: 2026-08-07</span>
-                  <span className="rounded-full bg-slate-100 px-3 py-2">작성자: 운영진</span>
-                </div>
-              </article>
-
-              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">다가오는 일정</p>
-                    <h3 className="mt-3 text-xl font-bold text-slate-900">{upcomingEvent.title}</h3>
-                  </div>
-                  <span className="rounded-3xl bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">{upcomingEvent.day}</span>
-                </div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-3xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">일시</p>
-                    <p className="mt-2 text-base font-semibold text-slate-900">{upcomingEvent.datetime}</p>
-                  </div>
-                  <div className="rounded-3xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">장소</p>
-                    <p className="mt-2 flex items-center gap-2 text-base font-semibold text-slate-900"><MapPin className="h-4 w-4 text-teal-600" />{upcomingEvent.location}</p>
-                  </div>
-                </div>
-                <button className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                  <CalendarDays className="h-4 w-4" /> 참가 신청
-                </button>
-              </article>
-
-              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최근 경기 결과</p>
-                    <h3 className="mt-3 text-xl font-bold text-slate-900">{recentMatch.result}</h3>
-                  </div>
-                  <span className="rounded-3xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">{recentMatch.score}</span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-slate-600">{recentMatch.summary}</p>
-                <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-500">
-                  <span className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"><MessageCircle className="h-4 w-4 text-slate-400" /> 최근 경기 요약</span>
-                  <span className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"><Users className="h-4 w-4 text-slate-400" /> 5명 참가</span>
-                </div>
-              </article>
+            
+            <div className="grid grid-cols-4 gap-1.5 bg-slate-100/80 p-1 rounded-xl">
+              {[
+                { id: "notices", label: "공지사항", icon: Bell },
+                { id: "tournament", label: "월례회", icon: Trophy },
+                { id: "matches", label: "경기전적", icon: CalendarDays },
+                { id: "merch", label: "단체복", icon: ShoppingBag },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`inline-flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs transition ${
+                      isActive
+                        ? "bg-emerald-600 text-white font-semibold shadow-sm"
+                        : "text-slate-600 hover:text-slate-900 font-medium"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <aside className="space-y-6">
-              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">클럽 정보</p>
-                    <h3 className="mt-3 text-lg font-bold text-slate-900">매너 수칙 & 안내</h3>
-                  </div>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">추천</span>
-                </div>
-                <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600">
-                  <p className="inline-flex items-center gap-2 text-slate-700"><MapPin className="h-4 w-4 text-teal-600" /> 코트 위치: {selectedClub.address}, {selectedClub.city}</p>
-                  <p className="inline-flex items-center gap-2 text-slate-700"><MessageCircle className="h-4 w-4 text-teal-600" /> 단톡방: <a href="#" className="font-semibold text-teal-700 hover:underline">바로가기</a></p>
-                </div>
-                <div className="mt-6 space-y-3 rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
-                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 매너를 준수하며 경기를 진행합니다.</p>
-                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 개인 장비는 스스로 관리합니다.</p>
-                  <p className="flex items-start gap-3"><span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span> 정시에 도착하여 러닝 시간을 준수합니다.</p>
-                </div>
-              </article>
+          {/* Tab Specific Content */}
+          <div className="space-y-4">
+            {/* Notice Section */}
+            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                  필독 공지
+                </span>
+                <span className="text-xs text-slate-400 font-medium">2026-08-07</span>
+              </div>
+              <h3 className="mt-3 text-base font-bold text-slate-900">월례회 준비물 및 코트 에티켓 안내</h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                이번 주 월례회 참가자는 라켓, 테니스화, 음료수를 지참해 주시고 정시 10분 전 코트에 도착 부탁드립니다.
+              </p>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <span>작성자: 운영진</span>
+                <span className="text-emerald-600 font-semibold cursor-pointer hover:underline">자세히 보기 →</span>
+              </div>
+            </article>
 
-              <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">최근 가입 멤버</p>
-                    <h3 className="mt-3 text-lg font-bold text-slate-900">최근 가입자</h3>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">최근 7일</span>
+            {/* Upcoming Event Card */}
+            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-slate-400 font-medium">다음 월례회</span>
+                  <h3 className="mt-1 text-base font-bold text-slate-900">{upcomingEvent.title}</h3>
                 </div>
-                <div className="mt-6 space-y-4">
-                  {recentMembers.map((member) => (
-                    <div key={member.name} className="flex items-center justify-between gap-3 rounded-3xl border border-slate-100 bg-slate-50 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">{member.name.slice(0, 1)}</div>
-                        <div>
-                          <p className="font-semibold text-slate-900">{member.name}</p>
-                          <p className="text-xs text-slate-500">{member.joined}</p>
-                        </div>
+                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {upcomingEvent.day}
+                </span>
+              </div>
+              <div className="mt-3 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
+                <p className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.datetime}</p>
+                <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-emerald-600" /> {upcomingEvent.location}</p>
+              </div>
+              <button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm py-2.5 text-xs transition flex items-center justify-center gap-1.5">
+                <CalendarDays className="h-4 w-4" /> 참가 신청하기
+              </button>
+            </article>
+
+            {/* Recent Match Card */}
+            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">최근 경기 전적</h3>
+                <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {recentMatch.result}
+                </span>
+              </div>
+              <p className="mt-2 text-xs font-mono font-semibold text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
+                스코어: {recentMatch.score}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">{recentMatch.summary}</p>
+            </article>
+
+            {/* Club Members Card */}
+            <article className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-900">신규 가입 멤버</h3>
+                <span className="text-xs text-slate-400">최근 7일</span>
+              </div>
+              <div className="space-y-2">
+                {recentMembers.map((member) => (
+                  <div key={member.name} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs">
+                        {member.name.slice(0, 1)}
                       </div>
-                      <button className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">
-                        <UserPlus className="h-3.5 w-3.5" /> 환영
-                      </button>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{member.name}</p>
+                        <p className="text-[10px] text-slate-400">{member.joined}</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </article>
-            </aside>
+                    <button className="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg transition">
+                      환영하기
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </article>
           </div>
         </section>
       </main>
     );
   }
 
+  /* AUTH VIEW MODE */
   return (
-    <main className="flex-1 flex flex-col justify-center px-6 py-10 text-gray-900">
+    <main className="flex-1 flex flex-col justify-center px-5 py-8 text-slate-900 space-y-6">
       <section className="space-y-6">
-        <div className="text-center">
-          <p className="text-sm uppercase tracking-[0.3em] text-teal-600">테니스 클럽</p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {mode === "login" ? "회원 로그인" : "회원가입"}
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-1 bg-lime-100 text-lime-900 text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+            🎾 스마트 테니스 동호회 플랫폼
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl mt-2">
+            Tennis Joa
           </h1>
-          <p className="mt-3 text-sm text-gray-500 sm:text-base">
-            클럽 경기, 전적, 매치 정보를 바로 확인하세요.
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            클럽 경기전적, 월례회 대회, 단체복 공제를 손쉽게 스마트하게 관리하세요.
           </p>
         </div>
 
-        <div className="flex rounded-2xl border border-gray-200 bg-gray-50 p-1">
+        {/* Tab Switcher */}
+        <div className="flex bg-slate-100/90 border border-slate-200/80 p-1 rounded-2xl">
           <button
             type="button"
             onClick={() => {
@@ -688,8 +679,10 @@ export default function Home() {
               setErrors({});
               setStatus("");
             }}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-              mode === "login" ? "bg-white text-teal-700 shadow-sm" : "text-gray-500"
+            className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all ${
+              mode === "login"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
             로그인
@@ -701,8 +694,10 @@ export default function Home() {
               setErrors({});
               setStatus("");
             }}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-              mode === "signup" ? "bg-white text-teal-700 shadow-sm" : "text-gray-500"
+            className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all ${
+              mode === "signup"
+                ? "bg-white text-emerald-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
             }`}
           >
             회원가입
@@ -710,15 +705,15 @@ export default function Home() {
         </div>
 
         {status ? (
-          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 text-xs text-emerald-800 font-medium">
             {status}
           </div>
         ) : null}
 
         {mode === "login" ? (
-          <form onSubmit={handleLogin} className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-6 space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-xs font-semibold text-slate-700">
                 아이디
               </label>
               <input
@@ -726,14 +721,14 @@ export default function Home() {
                 type="text"
                 value={form.username}
                 onChange={(event) => updateField("username", event.target.value)}
-                placeholder="example123"
+                placeholder="아이디를 입력하세요"
                 required
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
                 비밀번호
               </label>
               <input
@@ -741,23 +736,23 @@ export default function Home() {
                 type="password"
                 value={form.password}
                 onChange={(event) => updateField("password", event.target.value)}
-                placeholder="8자리 이상 입력"
+                placeholder="비밀번호를 입력하세요"
                 required
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-2xl bg-teal-600 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm py-3.5 text-sm transition-all mt-2"
             >
-              로그인
+              로그인하기
             </button>
           </form>
         ) : (
-          <form onSubmit={handleSignup} className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <form onSubmit={handleSignup} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-6 space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-xs font-semibold text-slate-700">
                 이름
               </label>
               <input
@@ -766,13 +761,13 @@ export default function Home() {
                 value={form.name}
                 onChange={(event) => updateField("name", event.target.value)}
                 placeholder="홍길동"
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               />
-              {errors.name ? <p className="mt-2 text-sm text-red-500">{errors.name}</p> : null}
+              {errors.name ? <p className="mt-1 text-xs text-red-500">{errors.name}</p> : null}
             </div>
 
             <div>
-              <label htmlFor="signup-username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="signup-username" className="block text-xs font-semibold text-slate-700">
                 아이디
               </label>
               <input
@@ -780,14 +775,14 @@ export default function Home() {
                 type="text"
                 value={form.username}
                 onChange={(event) => updateField("username", event.target.value)}
-                placeholder="example123"
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                placeholder="영문, 숫자 4자 이상"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               />
-              {errors.username ? <p className="mt-2 text-sm text-red-500">{errors.username}</p> : null}
+              {errors.username ? <p className="mt-1 text-xs text-red-500">{errors.username}</p> : null}
             </div>
 
             <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="signup-password" className="block text-xs font-semibold text-slate-700">
                 비밀번호
               </label>
               <input
@@ -795,17 +790,17 @@ export default function Home() {
                 type="password"
                 value={form.password}
                 onChange={(event) => updateField("password", event.target.value)}
-                placeholder="8자리 이상 입력"
-                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                placeholder="8자 이상 입력"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               />
-              {errors.password ? <p className="mt-2 text-sm text-red-500">{errors.password}</p> : null}
+              {errors.password ? <p className="mt-1 text-xs text-red-500">{errors.password}</p> : null}
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-2xl bg-teal-600 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm py-3.5 text-sm transition-all mt-2"
             >
-              가입하기
+              회원가입 완료
             </button>
           </form>
         )}
@@ -813,3 +808,4 @@ export default function Home() {
     </main>
   );
 }
+
