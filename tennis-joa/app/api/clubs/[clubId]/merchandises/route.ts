@@ -17,6 +17,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ clu
       description: body.description,
       price: Number(body.price),
       imageUrl: body.imageUrl,
+      colors: body.colors ?? [],
       sizes: body.sizes ?? [],
     },
   });

@@ -3,11 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-
+  provider = "postgresql"
 }
-
-
 
 // 1. 사용자 (선수)
 model User {
@@ -16,7 +13,7 @@ model User {
   username  String   @unique
   password  String
   email     String?  @unique
-  ntrp      Float?   // 테니스 실력 지수 (예: 3.5)
+  ntrp      Float? // 테니스 실력 지수 (예: 3.5)
   createdAt DateTime @default(now())
 
   // 관계 설정 (내가 참여한 경기들)
@@ -24,34 +21,34 @@ model User {
   player2Matches Match[] @relation("Player2")
   wonMatches     Match[] @relation("Winner")
 
-  notices        ClubNotice[]
-  orders         Order[]
-  matchRecordsAsPlayer1 MatchRecord[] @relation("MatchPlayer1")
-  matchRecordsAsPlayer2 MatchRecord[] @relation("MatchPlayer2")
-  tournamentPlayers TournamentPlayer[]
+  notices               ClubNotice[]
+  orders                Order[]
+  matchRecordsAsPlayer1 MatchRecord[]      @relation("MatchPlayer1")
+  matchRecordsAsPlayer2 MatchRecord[]      @relation("MatchPlayer2")
+  tournamentPlayers     TournamentPlayer[]
 }
 
 // 2. 경기 전적
 model Match {
-  id          String   @id @default(cuid())
-  date        DateTime @default(now())
-  matchType   String   // "SINGLES" (단식) 또는 "DOUBLES" (복식)
-  courtName   String?  // 테니스장 이름
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  matchType String // "SINGLES" (단식) 또는 "DOUBLES" (복식)
+  courtName String? // 테니스장 이름
 
   // 단식 기준 선수 연동
-  player1Id   String
-  player1     User     @relation("Player1", fields: [player1Id], references: [id])
-  
-  player2Id   String
-  player2     User     @relation("Player2", fields: [player2Id], references: [id])
+  player1Id String
+  player1   User   @relation("Player1", fields: [player1Id], references: [id])
+
+  player2Id String
+  player2   User   @relation("Player2", fields: [player2Id], references: [id])
 
   // 경기 결과
-  winnerId    String
-  winner      User     @relation("Winner", fields: [winnerId], references: [id])
+  winnerId String
+  winner   User   @relation("Winner", fields: [winnerId], references: [id])
 
-  score       String   // 세트 스코어 (예: "6-4, 3-6, 10-8")
-  memo        String?  // 경기 일기/메모
-  createdAt   DateTime @default(now())
+  score     String // 세트 스코어 (예: "6-4, 3-6, 10-8")
+  memo      String? // 경기 일기/메모
+  createdAt DateTime @default(now())
 }
 
 model Club {
@@ -72,107 +69,120 @@ model Club {
 }
 
 model ClubNotice {
-  id            String   @id @default(cuid())
-  clubId        String
-  club          Club     @relation(fields: [clubId], references: [id])
-  authorId      String?
-  author        User?    @relation(fields: [authorId], references: [id])
-  title         String
-  content       String
-  isImportant   Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Merchandise {
-  id           String   @id @default(cuid())
-  clubId       String
-  club         Club     @relation(fields: [clubId], references: [id])
-  name         String
-  description  String?
-  price        Int
-  imageUrl     String?
-  colors       String[]
-  sizes        String[]
-  createdAt    DateTime @default(now())
-
-  orders       Order[]
-}
-
-model Order {
-  id              String   @id @default(cuid())
-  clubId          String
-  club            Club     @relation(fields: [clubId], references: [id])
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  merchandiseId   String
-  merchandise     Merchandise @relation(fields: [merchandiseId], references: [id])
-  selectedSize    String
-  selectedColor   String?
-  quantity        Int      @default(1)
-  status          String   @default("PENDING")
-  createdAt       DateTime @default(now())
-}
-
-model MatchRecord {
-  id             String   @id @default(cuid())
-  clubId         String
-  club           Club     @relation(fields: [clubId], references: [id])
-  matchType      String   @default("DOUBLE")
-  player1Id      String?
-  player1        User?    @relation("MatchPlayer1", fields: [player1Id], references: [id])
-  player2Id      String?
-  player2        User?    @relation("MatchPlayer2", fields: [player2Id], references: [id])
-  opponent1Name  String?
-  opponent2Name  String?
-  score          String?
-  isWin          Boolean?
-  matchDate      DateTime @default(now())
-}
-
-model MonthlyTournament {
   id          String   @id @default(cuid())
   clubId      String
   club        Club     @relation(fields: [clubId], references: [id])
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id])
   title       String
-  eventDate   DateTime
-  status      String   @default("UPCOMING")
+  content     String
+  isImportant Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Merchandise {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id])
+  name        String
+  description String?
+  price       Int
+  imageUrl    String?
+  colors      String[]
+  sizes       String[]
   createdAt   DateTime @default(now())
 
-  groups      TournamentGroup[]
+  orders            Order[]
+  merchandiseOrders MerchandiseOrder[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  clubId        String
+  club          Club        @relation(fields: [clubId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  merchandiseId String
+  merchandise   Merchandise @relation(fields: [merchandiseId], references: [id])
+  selectedSize  String
+  selectedColor String?
+  quantity      Int         @default(1)
+  status        String      @default("PENDING")
+  createdAt     DateTime    @default(now())
+}
+
+model MerchandiseOrder {
+  id            String      @id @default(cuid())
+  merchandiseId String
+  merchandise   Merchandise @relation(fields: [merchandiseId], references: [id])
+  userId        String?
+  selectedColor String?
+  selectedSize  String?
+  quantity      Int         @default(1)
+  status        String      @default("PENDING")
+  createdAt     DateTime    @default(now())
+}
+
+model MatchRecord {
+  id            String   @id @default(cuid())
+  clubId        String
+  club          Club     @relation(fields: [clubId], references: [id])
+  matchType     String   @default("DOUBLE")
+  player1Id     String?
+  player1       User?    @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2Id     String?
+  player2       User?    @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  opponent1Name String?
+  opponent2Name String?
+  score         String?
+  isWin         Boolean?
+  matchDate     DateTime @default(now())
+}
+
+model MonthlyTournament {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id])
+  title     String
+  eventDate DateTime
+  status    String   @default("UPCOMING")
+  createdAt DateTime @default(now())
+
+  groups TournamentGroup[]
 }
 
 model TournamentGroup {
-  id            String   @id @default(cuid())
-  tournamentId  String
-  tournament    MonthlyTournament @relation(fields: [tournamentId], references: [id])
-  groupName     String
-  createdAt     DateTime @default(now())
+  id           String            @id @default(cuid())
+  tournamentId String
+  tournament   MonthlyTournament @relation(fields: [tournamentId], references: [id])
+  groupName    String
+  createdAt    DateTime          @default(now())
 
-  players       TournamentPlayer[]
-  matches       TournamentMatch[]
+  players TournamentPlayer[]
+  matches TournamentMatch[]
 }
 
 model TournamentPlayer {
-  id           String   @id @default(cuid())
-  groupId      String
-  group        TournamentGroup @relation(fields: [groupId], references: [id])
-  userId       String?
-  user         User?    @relation(fields: [userId], references: [id])
-  displayName  String
-  createdAt    DateTime @default(now())
+  id          String          @id @default(cuid())
+  groupId     String
+  group       TournamentGroup @relation(fields: [groupId], references: [id])
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id])
+  displayName String
+  createdAt   DateTime        @default(now())
 }
 
 model TournamentMatch {
-  id                String   @id @default(cuid())
-  groupId           String
-  group             TournamentGroup @relation(fields: [groupId], references: [id])
-  team1Player1Id    String?
-  team1Player2Id    String?
-  team2Player1Id    String?
-  team2Player2Id    String?
-  team1Score        Int?
-  team2Score        Int?
-  isCompleted       Boolean  @default(false)
-  createdAt         DateTime @default(now())
+  id             String          @id @default(cuid())
+  groupId        String
+  group          TournamentGroup @relation(fields: [groupId], references: [id])
+  team1Player1Id String?
+  team1Player2Id String?
+  team2Player1Id String?
+  team2Player2Id String?
+  team1Score     Int?
+  team2Score     Int?
+  isCompleted    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
 }
