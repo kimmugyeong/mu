@@ -135,6 +135,21 @@ export default function MerchandisePage({ params }: Props) {
       alert("해당 상품은 수요 조사가 마감되었습니다.");
       return;
     }
+
+    // 본인 이름 자동 연동
+    const savedUser = localStorage.getItem("loggedInUser");
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setApplicantName(parsed.name || parsed.username || "회원");
+        setUserId(parsed.username || parsed.id || "user_guest");
+      } catch (e) {
+        setApplicantName("익명회원");
+      }
+    } else {
+      if (!applicantName) setApplicantName("김현수 (회원)");
+    }
+
     setSelectedMerch(item);
     setSelectedColor(item.colors && item.colors.length ? item.colors[0] : "");
     setSelectedSize(item.sizes && item.sizes.length ? item.sizes[0] : "");
@@ -738,13 +753,18 @@ export default function MerchandisePage({ params }: Props) {
 
               {/* Applicant Name Input */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">신청자 성함 / 닉네임 *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">신청자 성함 / 닉네임 *</label>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">
+                    ⚡ 본인 계정 자동 연동 완료
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={applicantName}
                   onChange={(e) => setApplicantName(e.target.value)}
                   placeholder="예: 홍길동 (입금자명과 동일하게 입력)"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
 

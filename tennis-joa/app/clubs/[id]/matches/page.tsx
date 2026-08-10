@@ -10,15 +10,21 @@ import {
   Users,
   CheckCircle2,
   XCircle,
-  Medal,
-  Award,
   Sparkles,
-  TrendingUp,
-  Search
+  Search,
+  UserCheck,
+  UserPlus
 } from "lucide-react";
 
 type Props = {
   params: Promise<{ id: string }>;
+};
+
+type ClubMember = {
+  id: string;
+  name: string;
+  username: string;
+  ntrp?: number;
 };
 
 type MatchRecord = {
@@ -41,6 +47,7 @@ export default function MatchesPage({ params }: Props) {
   const clubId = resolvedParams.id;
 
   const [matches, setMatches] = useState<MatchRecord[]>([]);
+  const [members, setMembers] = useState<ClubMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeView, setActiveView] = useState<"RECORDS" | "LEADERBOARD">("RECORDS");
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +55,13 @@ export default function MatchesPage({ params }: Props) {
   // Input Form Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [matchDate, setMatchDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // Player selection vs Guest input states for 4 players
+  const [isGuestP1, setIsGuestP1] = useState(false);
+  const [isGuestP2, setIsGuestP2] = useState(false);
+  const [isGuestO1, setIsGuestO1] = useState(false);
+  const [isGuestO2, setIsGuestO2] = useState(false);
+
   const [player1Name, setPlayer1Name] = useState("");
   const [player2Name, setPlayer2Name] = useState("");
   const [opponent1Name, setOpponent1Name] = useState("");
@@ -58,6 +72,7 @@ export default function MatchesPage({ params }: Props) {
 
   useEffect(() => {
     loadMatches();
+    loadMembers();
   }, [clubId]);
 
   async function loadMatches() {
@@ -75,10 +90,34 @@ export default function MatchesPage({ params }: Props) {
     }
   }
 
+  async function loadMembers() {
+    try {
+      const res = await fetch(`/api/clubs/${clubId}/members`);
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data);
+        if (data.length >= 4) {
+          setPlayer1Name(data[0].name);
+          setPlayer2Name(data[1].name);
+          setOpponent1Name(data[2].name);
+          setOpponent2Name(data[3].name);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   async function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
-    if (!player1Name.trim() || !player2Name.trim() || !opponent1Name.trim() || !opponent2Name.trim() || !score.trim()) {
-      alert("모든 플레이어 이름과 경기 스코어를 입력해 주세요.");
+
+    const p1 = isGuestP1 ? `(게스트)${player1Name.trim()}` : player1Name;
+    const p2 = isGuestP2 ? `(게스트)${player2Name.trim()}` : player2Name;
+    const o1 = isGuestO1 ? `(게스트)${opponent1Name.trim()}` : opponent1Name;
+    const o2 = isGuestO2 ? `(게스트)${opponent2Name.trim()}` : opponent2Name;
+
+    if (!p1 || !p2 || !o1 || !o2 || !score.trim()) {
+      alert("모든 플레이어 정보와 스코어를 입력해 주세요.");
       return;
     }
 
@@ -89,10 +128,10 @@ export default function MatchesPage({ params }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           matchType: "DOUBLE",
-          player1Id: player1Name.trim(),
-          player2Id: player2Name.trim(),
-          opponent1Name: opponent1Name.trim(),
-          opponent2Name: opponent2Name.trim(),
+          player1Id: p1,
+          player2Id: p2,
+          opponent1Name: o1,
+          opponent2Name: o2,
           score: score.trim(),
           isWin,
           matchDate,
@@ -100,10 +139,6 @@ export default function MatchesPage({ params }: Props) {
       });
 
       if (res.ok) {
-        setPlayer1Name("");
-        setPlayer2Name("");
-        setOpponent1Name("");
-        setOpponent2Name("");
         setScore("");
         setShowCreateModal(false);
         loadMatches();
@@ -126,12 +161,11 @@ export default function MatchesPage({ params }: Props) {
     > = {};
 
     matches.forEach((m) => {
-      const p1 = m.player1Id || m.player1Name || "나";
-      const p2 = m.player2Id || m.player2Name || "파트너";
+      const p1 = m.player1Id || m.player1Name || "플레이어1";
+      const p2 = m.player2Id || m.player2Name || "플레이어2";
       const o1 = m.opponent1Name || "상대1";
       const o2 = m.opponent2Name || "상대2";
 
-      // Parse score (e.g., "6-4" or "6-3, 4-6, 10-8")
       let team1ScoreSum = 0;
       let team2ScoreSum = 0;
 
@@ -221,7 +255,7 @@ export default function MatchesPage({ params }: Props) {
                   RANKING
                 </span>
               </h1>
-              <p className="text-[11px] text-slate-500">복식 경기 입력 및 전적 랭킹 순위표</p>
+              <p className="text-[11px] text-slate-500">회원 검증 & 게스트 복식 경기 등록 시스템</p>
             </div>
           </div>
 
@@ -244,7 +278,7 @@ export default function MatchesPage({ params }: Props) {
               </div>
               <h2 className="text-lg font-extrabold">클럽 복식 전적 기록</h2>
               <p className="text-xs text-emerald-100/90">
-                총 {matches.length}경기 기록 등록됨 · 랭킹 집계 중
+                회원 {members.length}명 등록됨 · 총 {matches.length}경기 집계 중
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-lime-300 backdrop-blur-xs font-mono font-bold text-xl">
@@ -286,7 +320,7 @@ export default function MatchesPage({ params }: Props) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="선수 이름으로 경기 검색..."
+                placeholder="선수 또는 게스트 이름 검색..."
                 className="w-full pl-9 pr-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl shadow-2xs outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
               />
             </div>
@@ -298,13 +332,13 @@ export default function MatchesPage({ params }: Props) {
               <div className="bg-white rounded-2xl p-8 border border-slate-200/80 text-center space-y-2 shadow-2xs">
                 <Activity className="h-8 w-8 text-slate-300 mx-auto" />
                 <p className="text-sm font-bold text-slate-700">등록된 경기 전적이 없습니다.</p>
-                <p className="text-xs text-slate-400">상단 '+ 경기 등록' 버튼으로 복식 전적을 등록해보세요.</p>
+                <p className="text-xs text-slate-400">상단 '+ 경기 등록' 버튼으로 회원/게스트 복식 전적을 추가해보세요.</p>
               </div>
             ) : (
               <section className="space-y-3">
                 {filteredMatches.map((m) => {
-                  const p1 = m.player1Id || m.player1Name || "플레이어1";
-                  const p2 = m.player2Id || m.player2Name || "플레이어2";
+                  const p1 = m.player1Id || m.player1Name || "선수1";
+                  const p2 = m.player2Id || m.player2Name || "선수2";
                   const o1 = m.opponent1Name || "상대1";
                   const o2 = m.opponent2Name || "상대2";
                   const formattedDate = new Date(m.matchDate).toLocaleDateString("ko-KR", {
@@ -388,7 +422,7 @@ export default function MatchesPage({ params }: Props) {
               <h3 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
                 <Trophy className="h-4 w-4 text-amber-500" /> 클럽 개인 통합 순위표
               </h3>
-              <span className="text-[10px] text-slate-400">승률 순 정렬</span>
+              <span className="text-[10px] text-slate-400">회원 & 게스트 승률 순 정렬</span>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -422,7 +456,18 @@ export default function MatchesPage({ params }: Props) {
                           st.rank
                         )}
                       </td>
-                      <td className="py-2.5 px-3 font-bold text-slate-900">{st.name}</td>
+                      <td className="py-2.5 px-3 font-bold text-slate-900 flex items-center gap-1">
+                        {st.name.includes("(게스트)") ? (
+                          <span className="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded">
+                            게스트
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">
+                            회원
+                          </span>
+                        )}
+                        <span>{st.name.replace("(게스트)", "")}</span>
+                      </td>
                       <td className="py-2.5 px-3 text-center font-semibold text-slate-700">
                         {st.wins}승 {st.losses}패
                       </td>
@@ -449,13 +494,13 @@ export default function MatchesPage({ params }: Props) {
         )}
       </main>
 
-      {/* Modal for Registering Doubles Match */}
+      {/* Modal for Registering Doubles Match with Member vs Guest Controls */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
-            <div className="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between sticky top-0 z-10">
               <h3 className="text-sm font-bold flex items-center gap-1.5">
-                <Activity className="h-4 w-4" /> 복식 경기 전적 입력
+                <Activity className="h-4 w-4" /> 복식 경기 입력 (회원/게스트)
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -478,48 +523,160 @@ export default function MatchesPage({ params }: Props) {
               </div>
 
               {/* Team A */}
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                <p className="text-[11px] font-bold text-emerald-800">우리 팀 (TEAM A)</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={player1Name}
-                    onChange={(e) => setPlayer1Name(e.target.value)}
-                    placeholder="플레이어 1 (나)"
-                    required
-                    className="px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
-                  />
-                  <input
-                    type="text"
-                    value={player2Name}
-                    onChange={(e) => setPlayer2Name(e.target.value)}
-                    placeholder="플레이어 2 (파트너)"
-                    required
-                    className="px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
-                  />
+              <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200/80 space-y-2.5">
+                <p className="text-[11px] font-extrabold text-emerald-900 flex items-center gap-1">
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-700" /> 우리 팀 (TEAM A)
+                </p>
+
+                {/* Player 1 */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-600">플레이어 1</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsGuestP1((p) => !p)}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                    >
+                      {isGuestP1 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
+                    </button>
+                  </div>
+                  {isGuestP1 ? (
+                    <input
+                      type="text"
+                      value={player1Name}
+                      onChange={(e) => setPlayer1Name(e.target.value)}
+                      placeholder="게스트 이름을 입력하세요 (예: 홍길동)"
+                      required
+                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
+                    />
+                  ) : (
+                    <select
+                      value={player1Name}
+                      onChange={(e) => setPlayer1Name(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600 font-medium"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id + "p1"} value={m.name}>
+                          {m.name} ({m.username})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Player 2 */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-600">플레이어 2 (파트너)</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsGuestP2((p) => !p)}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                    >
+                      {isGuestP2 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
+                    </button>
+                  </div>
+                  {isGuestP2 ? (
+                    <input
+                      type="text"
+                      value={player2Name}
+                      onChange={(e) => setPlayer2Name(e.target.value)}
+                      placeholder="게스트 이름을 입력하세요"
+                      required
+                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
+                    />
+                  ) : (
+                    <select
+                      value={player2Name}
+                      onChange={(e) => setPlayer2Name(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600 font-medium"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id + "p2"} value={m.name}>
+                          {m.name} ({m.username})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
               {/* Team B */}
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                <p className="text-[11px] font-bold text-slate-700">상대 팀 (TEAM B)</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={opponent1Name}
-                    onChange={(e) => setOpponent1Name(e.target.value)}
-                    placeholder="상대선수 1"
-                    required
-                    className="px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
-                  />
-                  <input
-                    type="text"
-                    value={opponent2Name}
-                    onChange={(e) => setOpponent2Name(e.target.value)}
-                    placeholder="상대선수 2"
-                    required
-                    className="px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600"
-                  />
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+                <p className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5 text-slate-600" /> 상대 팀 (TEAM B)
+                </p>
+
+                {/* Opponent 1 */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-600">상대선수 1</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsGuestO1((p) => !p)}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                    >
+                      {isGuestO1 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
+                    </button>
+                  </div>
+                  {isGuestO1 ? (
+                    <input
+                      type="text"
+                      value={opponent1Name}
+                      onChange={(e) => setOpponent1Name(e.target.value)}
+                      placeholder="게스트 이름을 입력하세요"
+                      required
+                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
+                    />
+                  ) : (
+                    <select
+                      value={opponent1Name}
+                      onChange={(e) => setOpponent1Name(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600 font-medium"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id + "o1"} value={m.name}>
+                          {m.name} ({m.username})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Opponent 2 */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-600">상대선수 2</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsGuestO2((p) => !p)}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                    >
+                      {isGuestO2 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
+                    </button>
+                  </div>
+                  {isGuestO2 ? (
+                    <input
+                      type="text"
+                      value={opponent2Name}
+                      onChange={(e) => setOpponent2Name(e.target.value)}
+                      placeholder="게스트 이름을 입력하세요"
+                      required
+                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
+                    />
+                  ) : (
+                    <select
+                      value={opponent2Name}
+                      onChange={(e) => setOpponent2Name(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-600 font-medium"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id + "o2"} value={m.name}>
+                          {m.name} ({m.username})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -563,7 +720,7 @@ export default function MatchesPage({ params }: Props) {
                   disabled={isSubmitting}
                   className="flex-1 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
                 >
-                  {isSubmitting ? "등록 중..." : "전적 등록하기"}
+                  {isSubmitting ? "등록 중..." : "전적 등록 완료"}
                 </button>
               </div>
             </form>
