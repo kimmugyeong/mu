@@ -13,7 +13,7 @@ import {
   Sparkles,
   Search,
   UserCheck,
-  UserPlus
+  AlertTriangle
 } from "lucide-react";
 
 type Props = {
@@ -56,7 +56,7 @@ export default function MatchesPage({ params }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [matchDate, setMatchDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Player selection vs Guest input states for 4 players
+  // Member vs Guest toggle state per player
   const [isGuestP1, setIsGuestP1] = useState(false);
   const [isGuestP2, setIsGuestP2] = useState(false);
   const [isGuestO1, setIsGuestO1] = useState(false);
@@ -66,9 +66,17 @@ export default function MatchesPage({ params }: Props) {
   const [player2Name, setPlayer2Name] = useState("");
   const [opponent1Name, setOpponent1Name] = useState("");
   const [opponent2Name, setOpponent2Name] = useState("");
-  const [score, setScore] = useState("");
-  const [isWin, setIsWin] = useState(true);
+
+  // 개편된 점수 입력 방식: 우리팀 점수 & 상대팀 점수 분리
+  const [team1Score, setTeam1Score] = useState<number>(6);
+  const [team2Score, setTeam2Score] = useState<number>(4);
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 우리팀 스코어 > 상대팀 스코어 기반 승/패 자동 판정
+  const computedIsWin = Number(team1Score) > Number(team2Score);
+  const computedScoreString = `${team1Score}-${team2Score}`;
 
   useEffect(() => {
     loadMatches();
@@ -84,7 +92,7 @@ export default function MatchesPage({ params }: Props) {
         setMatches(data);
       }
     } catch (e) {
-      console.error(e);
+      console.error("전적 불러오기 에러:", e);
     } finally {
       setLoading(false);
     }
@@ -101,59 +109,75 @@ export default function MatchesPage({ params }: Props) {
           setPlayer2Name(data[1].name);
           setOpponent1Name(data[2].name);
           setOpponent2Name(data[3].name);
+        } else if (data.length > 0) {
+          setPlayer1Name(data[0].name);
+          setPlayer2Name(data[0].name);
+          setOpponent1Name(data[0].name);
+          setOpponent2Name(data[0].name);
         }
       }
     } catch (e) {
-      console.error(e);
+      console.error("회원 목록 불러오기 에러:", e);
     }
   }
 
   async function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
+    setErrorMessage(null);
 
-    const p1 = isGuestP1 ? `(게스트)${player1Name.trim()}` : player1Name;
-    const p2 = isGuestP2 ? `(게스트)${player2Name.trim()}` : player2Name;
-    const o1 = isGuestO1 ? `(게스트)${opponent1Name.trim()}` : opponent1Name;
-    const o2 = isGuestO2 ? `(게스트)${opponent2Name.trim()}` : opponent2Name;
+    const finalP1 = isGuestP1 ? `(게스트)${player1Name.trim()}` : player1Name.trim();
+    const finalP2 = isGuestP2 ? `(게스트)${player2Name.trim()}` : player2Name.trim();
+    const finalO1 = isGuestO1 ? `(게스트)${opponent1Name.trim()}` : opponent1Name.trim();
+    const finalO2 = isGuestO2 ? `(게스트)${opponent2Name.trim()}` : opponent2Name.trim();
 
-    if (!p1 || !p2 || !o1 || !o2 || !score.trim()) {
-      alert("모든 플레이어 정보와 스코어를 입력해 주세요.");
+    if (!finalP1 || !finalP2 || !finalO1 || !finalO2) {
+      setErrorMessage("우리팀과 상대팀 모든 선수 이름을 입력해 주세요.");
+      return;
+    }
+
+    if (team1Score === team2Score) {
+      setErrorMessage("테니스 경기는 동점 스코어가 존재하지 않습니다. 승리 팀의 점수를 더 높게 설정하세요.");
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const payload = {
+        matchType: "DOUBLE",
+        player1Name: finalP1,
+        player2Name: finalP2,
+        opponent1Name: finalO1,
+        opponent2Name: finalO2,
+        score: computedScoreString,
+        isWin: computedIsWin,
+        matchDate,
+      };
+
       const res = await fetch(`/api/clubs/${clubId}/matches`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matchType: "DOUBLE",
-          player1Id: p1,
-          player2Id: p2,
-          opponent1Name: o1,
-          opponent2Name: o2,
-          score: score.trim(),
-          isWin,
-          matchDate,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        setScore("");
         setShowCreateModal(false);
+        setErrorMessage(null);
         loadMatches();
       } else {
-        alert("경기 전적 등록에 실패했습니다.");
+        const errorData = await res.json().catch(() => ({}));
+        const msg = errorData.error || "경기 전적 등록 실패 (서버 응답 오류)";
+        setErrorMessage(msg);
+        console.error("경기 전적 등록 에러 상세:", errorData);
       }
-    } catch (err) {
-      console.error(err);
-      alert("오류가 발생했습니다.");
+    } catch (err: any) {
+      console.error("네트워크/요청 에러:", err);
+      setErrorMessage("서버 통신 중 에러가 발생했습니다: " + (err.message || String(err)));
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  // Calculate Overall Leaderboard Standings based on Match Records
+  // Calculate Overall Leaderboard Standings
   const leaderboardStats = (() => {
     const stats: Record<
       string,
@@ -161,10 +185,28 @@ export default function MatchesPage({ params }: Props) {
     > = {};
 
     matches.forEach((m) => {
-      const p1 = m.player1Id || m.player1Name || "플레이어1";
-      const p2 = m.player2Id || m.player2Name || "플레이어2";
-      const o1 = m.opponent1Name || "상대1";
-      const o2 = m.opponent2Name || "상대2";
+      let p1 = "선수1";
+      let p2 = "선수2";
+      let o1 = "상대1";
+      let o2 = "상대2";
+
+      if (m.opponent1Name && m.opponent1Name.includes("&")) {
+        const parts = m.opponent1Name.split("&").map((s) => s.trim());
+        p1 = parts[0] || p1;
+        p2 = parts[1] || p2;
+      } else {
+        p1 = m.player1Id || m.player1Name || p1;
+        p2 = m.player2Id || m.player2Name || p2;
+      }
+
+      if (m.opponent2Name && m.opponent2Name.includes("&")) {
+        const parts = m.opponent2Name.split("&").map((s) => s.trim());
+        o1 = parts[0] || o1;
+        o2 = parts[1] || o2;
+      } else {
+        o1 = m.opponent1Name || o1;
+        o2 = m.opponent2Name || o2;
+      }
 
       let team1ScoreSum = 0;
       let team2ScoreSum = 0;
@@ -232,11 +274,9 @@ export default function MatchesPage({ params }: Props) {
 
   const filteredMatches = matches.filter((m) => {
     const q = searchQuery.toLowerCase();
-    const p1 = (m.player1Id || m.player1Name || "").toLowerCase();
-    const p2 = (m.player2Id || m.player2Name || "").toLowerCase();
-    const o1 = (m.opponent1Name || "").toLowerCase();
-    const o2 = (m.opponent2Name || "").toLowerCase();
-    return p1.includes(q) || p2.includes(q) || o1.includes(q) || o2.includes(q);
+    const str1 = (m.opponent1Name || "").toLowerCase();
+    const str2 = (m.opponent2Name || "").toLowerCase();
+    return str1.includes(q) || str2.includes(q);
   });
 
   return (
@@ -252,15 +292,18 @@ export default function MatchesPage({ params }: Props) {
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
                 클럽 경기 전적 & 랭킹
                 <span className="text-[10px] bg-lime-100 text-lime-900 font-extrabold px-2 py-0.5 rounded-full">
-                  RANKING
+                  MATCH SYSTEM
                 </span>
               </h1>
-              <p className="text-[11px] text-slate-500">회원 검증 & 게스트 복식 경기 등록 시스템</p>
+              <p className="text-[11px] text-slate-500">회원/게스트 지정 및 팀 스코어 구분 등록</p>
             </div>
           </div>
 
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              setErrorMessage(null);
+              setShowCreateModal(true);
+            }}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1"
           >
             <PlusCircle className="h-4 w-4" /> 경기 등록
@@ -278,7 +321,7 @@ export default function MatchesPage({ params }: Props) {
               </div>
               <h2 className="text-lg font-extrabold">클럽 복식 전적 기록</h2>
               <p className="text-xs text-emerald-100/90">
-                회원 {members.length}명 등록됨 · 총 {matches.length}경기 집계 중
+                등록 회원 {members.length}명 · 누적 경기 {matches.length}건
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-lime-300 backdrop-blur-xs font-mono font-bold text-xl">
@@ -332,15 +375,13 @@ export default function MatchesPage({ params }: Props) {
               <div className="bg-white rounded-2xl p-8 border border-slate-200/80 text-center space-y-2 shadow-2xs">
                 <Activity className="h-8 w-8 text-slate-300 mx-auto" />
                 <p className="text-sm font-bold text-slate-700">등록된 경기 전적이 없습니다.</p>
-                <p className="text-xs text-slate-400">상단 '+ 경기 등록' 버튼으로 회원/게스트 복식 전적을 추가해보세요.</p>
+                <p className="text-xs text-slate-400">상단 '+ 경기 등록' 버튼으로 점수를 구분하여 입력해보세요.</p>
               </div>
             ) : (
               <section className="space-y-3">
                 {filteredMatches.map((m) => {
-                  const p1 = m.player1Id || m.player1Name || "선수1";
-                  const p2 = m.player2Id || m.player2Name || "선수2";
-                  const o1 = m.opponent1Name || "상대1";
-                  const o2 = m.opponent2Name || "상대2";
+                  const teamAStr = m.opponent1Name || "TEAM A";
+                  const teamBStr = m.opponent2Name || "TEAM B";
                   const formattedDate = new Date(m.matchDate).toLocaleDateString("ko-KR", {
                     year: "numeric",
                     month: "long",
@@ -364,7 +405,7 @@ export default function MatchesPage({ params }: Props) {
                           }`}
                         >
                           {m.isWin ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                          {m.isWin ? "승리 (WIN)" : "패배 (LOSE)"}
+                          {m.isWin ? "우리팀 승리 (WIN)" : "우리팀 패배 (LOSE)"}
                         </span>
                       </div>
 
@@ -379,10 +420,10 @@ export default function MatchesPage({ params }: Props) {
                           }`}
                         >
                           <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                            TEAM A
+                            OUR TEAM (A)
                           </span>
-                          <p className="text-xs font-extrabold text-slate-900">
-                            {p1} + {p2}
+                          <p className="text-xs font-extrabold text-slate-900 leading-snug">
+                            {teamAStr}
                           </p>
                         </div>
 
@@ -402,10 +443,10 @@ export default function MatchesPage({ params }: Props) {
                           }`}
                         >
                           <span className="text-[10px] text-slate-400 font-bold uppercase block">
-                            TEAM B
+                            OPPONENT (B)
                           </span>
-                          <p className="text-xs font-extrabold text-slate-900">
-                            {o1} + {o2}
+                          <p className="text-xs font-extrabold text-slate-900 leading-snug">
+                            {teamBStr}
                           </p>
                         </div>
                       </div>
@@ -422,7 +463,7 @@ export default function MatchesPage({ params }: Props) {
               <h3 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
                 <Trophy className="h-4 w-4 text-amber-500" /> 클럽 개인 통합 순위표
               </h3>
-              <span className="text-[10px] text-slate-400">회원 & 게스트 승률 순 정렬</span>
+              <span className="text-[10px] text-slate-400">승률 순 자동 정렬</span>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -494,13 +535,13 @@ export default function MatchesPage({ params }: Props) {
         )}
       </main>
 
-      {/* Modal for Registering Doubles Match with Member vs Guest Controls */}
+      {/* Modal for Registering Doubles Match */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div className="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between sticky top-0 z-10">
               <h3 className="text-sm font-bold flex items-center gap-1.5">
-                <Activity className="h-4 w-4" /> 복식 경기 입력 (회원/게스트)
+                <Activity className="h-4 w-4" /> 복식 경기 입력
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -511,6 +552,16 @@ export default function MatchesPage({ params }: Props) {
             </div>
 
             <form onSubmit={handleCreateMatch} className="p-5 space-y-3.5">
+              {errorMessage && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl text-xs font-bold flex items-start gap-2 animate-pulse">
+                  <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-extrabold">등록 실패 에러</p>
+                    <p className="text-[11px] font-normal mt-0.5">{errorMessage}</p>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">경기 일자</label>
                 <input
@@ -518,11 +569,11 @@ export default function MatchesPage({ params }: Props) {
                   value={matchDate}
                   onChange={(e) => setMatchDate(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 focus:bg-white font-medium"
                 />
               </div>
 
-              {/* Team A */}
+              {/* Team A Selection */}
               <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200/80 space-y-2.5">
                 <p className="text-[11px] font-extrabold text-emerald-900 flex items-center gap-1">
                   <UserCheck className="h-3.5 w-3.5 text-emerald-700" /> 우리 팀 (TEAM A)
@@ -531,11 +582,14 @@ export default function MatchesPage({ params }: Props) {
                 {/* Player 1 */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-600">플레이어 1</label>
+                    <label className="text-[10px] font-bold text-slate-600">선수 1 (나)</label>
                     <button
                       type="button"
-                      onClick={() => setIsGuestP1((p) => !p)}
-                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                      onClick={() => {
+                        setIsGuestP1((p) => !p);
+                        setPlayer1Name("");
+                      }}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline"
                     >
                       {isGuestP1 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
                     </button>
@@ -545,7 +599,7 @@ export default function MatchesPage({ params }: Props) {
                       type="text"
                       value={player1Name}
                       onChange={(e) => setPlayer1Name(e.target.value)}
-                      placeholder="게스트 이름을 입력하세요 (예: 홍길동)"
+                      placeholder="게스트 이름 입력 (예: 홍길동)"
                       required
                       className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
                     />
@@ -567,11 +621,14 @@ export default function MatchesPage({ params }: Props) {
                 {/* Player 2 */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-600">플레이어 2 (파트너)</label>
+                    <label className="text-[10px] font-bold text-slate-600">선수 2 (파트너)</label>
                     <button
                       type="button"
-                      onClick={() => setIsGuestP2((p) => !p)}
-                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                      onClick={() => {
+                        setIsGuestP2((p) => !p);
+                        setPlayer2Name("");
+                      }}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline"
                     >
                       {isGuestP2 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
                     </button>
@@ -581,7 +638,7 @@ export default function MatchesPage({ params }: Props) {
                       type="text"
                       value={player2Name}
                       onChange={(e) => setPlayer2Name(e.target.value)}
-                      placeholder="게스트 이름을 입력하세요"
+                      placeholder="게스트 이름 입력"
                       required
                       className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
                     />
@@ -601,7 +658,7 @@ export default function MatchesPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Team B */}
+              {/* Team B Selection */}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
                 <p className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1">
                   <Users className="h-3.5 w-3.5 text-slate-600" /> 상대 팀 (TEAM B)
@@ -613,8 +670,11 @@ export default function MatchesPage({ params }: Props) {
                     <label className="text-[10px] font-bold text-slate-600">상대선수 1</label>
                     <button
                       type="button"
-                      onClick={() => setIsGuestO1((p) => !p)}
-                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                      onClick={() => {
+                        setIsGuestO1((p) => !p);
+                        setOpponent1Name("");
+                      }}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline"
                     >
                       {isGuestO1 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
                     </button>
@@ -624,7 +684,7 @@ export default function MatchesPage({ params }: Props) {
                       type="text"
                       value={opponent1Name}
                       onChange={(e) => setOpponent1Name(e.target.value)}
-                      placeholder="게스트 이름을 입력하세요"
+                      placeholder="게스트 이름 입력"
                       required
                       className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
                     />
@@ -649,8 +709,11 @@ export default function MatchesPage({ params }: Props) {
                     <label className="text-[10px] font-bold text-slate-600">상대선수 2</label>
                     <button
                       type="button"
-                      onClick={() => setIsGuestO2((p) => !p)}
-                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                      onClick={() => {
+                        setIsGuestO2((p) => !p);
+                        setOpponent2Name("");
+                      }}
+                      className="text-[10px] font-bold text-emerald-700 hover:underline"
                     >
                       {isGuestO2 ? "← 회원 목록 선택" : "+ 게스트 직접 입력"}
                     </button>
@@ -660,7 +723,7 @@ export default function MatchesPage({ params }: Props) {
                       type="text"
                       value={opponent2Name}
                       onChange={(e) => setOpponent2Name(e.target.value)}
-                      placeholder="게스트 이름을 입력하세요"
+                      placeholder="게스트 이름 입력"
                       required
                       className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg outline-none focus:border-emerald-600"
                     />
@@ -680,31 +743,58 @@ export default function MatchesPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Score & Result */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">경기 스코어</label>
-                  <input
-                    type="text"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    placeholder="예: 6-4"
-                    required
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 font-mono"
-                  />
+              {/* 개편된 스코어 독립 입력 (Number Inputs) */}
+              <div className="bg-slate-100/80 p-3 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800">
+                    점수 구분 입력 (Score)
+                  </label>
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                      computedIsWin
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : "bg-rose-100 text-rose-800 border border-rose-300"
+                    }`}
+                  >
+                    {computedIsWin ? "우리팀 승리 (WIN)" : "우리팀 패배 (LOSE)"}
+                  </span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">우리팀 승패</label>
-                  <select
-                    value={isWin ? "WIN" : "LOSE"}
-                    onChange={(e) => setIsWin(e.target.value === "WIN")}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 font-bold"
-                  >
-                    <option value="WIN">승리 (WIN)</option>
-                    <option value="LOSE">패배 (LOSE)</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3 items-center">
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-[10px] font-bold text-emerald-800 mb-1">
+                      우리팀 스코어
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={team1Score}
+                      onChange={(e) => setTeam1Score(Math.max(0, parseInt(e.target.value) || 0))}
+                      required
+                      className="w-full text-center text-lg font-mono font-black text-slate-900 border border-slate-300 rounded-lg py-1 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                    />
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-center">
+                    <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                      상대팀 스코어
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={team2Score}
+                      onChange={(e) => setTeam2Score(Math.max(0, parseInt(e.target.value) || 0))}
+                      required
+                      className="w-full text-center text-lg font-mono font-black text-slate-900 border border-slate-300 rounded-lg py-1 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                    />
+                  </div>
                 </div>
+
+                <p className="text-[10px] text-slate-500 text-center font-mono font-semibold">
+                  최종 스코어: {computedScoreString} ({computedIsWin ? "우리팀 승리" : "상대팀 승리"})
+                </p>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -720,7 +810,7 @@ export default function MatchesPage({ params }: Props) {
                   disabled={isSubmitting}
                   className="flex-1 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
                 >
-                  {isSubmitting ? "등록 중..." : "전적 등록 완료"}
+                  {isSubmitting ? "등록 처리 중..." : "전적 등록 완료"}
                 </button>
               </div>
             </form>
