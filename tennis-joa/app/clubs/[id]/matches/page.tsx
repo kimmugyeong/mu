@@ -575,9 +575,14 @@ export default function MatchesPage({ params }: Props) {
 
               {/* Team A Selection */}
               <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200/80 space-y-2.5">
-                <p className="text-[11px] font-extrabold text-emerald-900 flex items-center gap-1">
-                  <UserCheck className="h-3.5 w-3.5 text-emerald-700" /> 우리 팀 (TEAM A)
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-extrabold text-emerald-900 flex items-center gap-1">
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-700" /> 우리 팀 (TEAM A)
+                  </p>
+                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">
+                    동일 클럽 회원 필터링 됨
+                  </span>
+                </div>
 
                 {/* Player 1 */}
                 <div className="space-y-1">

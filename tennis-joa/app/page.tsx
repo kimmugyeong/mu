@@ -900,17 +900,6 @@ export default function Home() {
           </form>
         )}
       </section>
-
-      <MainBottomNav
-        view="auth"
-        selectedClubId={selectedClub?.id}
-        onNavigateHome={() => setView("clubs")}
-        onNavigateTab={(tab) => {
-          setView("clubs");
-        }}
-        onNavigateAuth={() => setView("auth")}
-        loggedInUser={loggedInUser}
-      />
     </main>
   );
 }

@@ -26,6 +26,16 @@ export default function MainBottomNav({
   const router = useRouter();
   const pathname = usePathname();
 
+  // 로그인 및 회원가입 페이지/뷰에서는 하단 네비게이션 바 마운트 해제 (숨김 처리)
+  if (
+    view === "auth" ||
+    pathname?.includes("/login") ||
+    pathname?.includes("/signup") ||
+    pathname?.includes("/join")
+  ) {
+    return null;
+  }
+
   // 단체복 수요조사 페이지 여부 확인
   const isMerchandisePage = pathname?.includes("/merchandise");
 
