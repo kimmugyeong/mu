@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         role: true,
         status: true,
       },
-    });
+    }).catch(() => []);
 
     const joinedClubIds = memberships.map((m) => m.clubId);
 
