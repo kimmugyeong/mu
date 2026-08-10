@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   Bell,
   PlusCircle,
@@ -77,6 +78,7 @@ export default function NoticesPage({ params }: Props) {
     }
 
     setIsSubmitting(true);
+    const authorUser = getLoggedInUser();
     try {
       const res = await fetch(`/api/clubs/${clubId}/notices`, {
         method: "POST",
@@ -85,6 +87,7 @@ export default function NoticesPage({ params }: Props) {
           title: title.trim(),
           content: content.trim(),
           isImportant,
+          authorName: authorUser.name,
         }),
       });
 

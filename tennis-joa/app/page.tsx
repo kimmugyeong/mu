@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus, Shirt, ChevronRight, Lock } from "lucide-react";
 import { validateClubInput } from "@/lib/clubValidation";
 import MainBottomNav from "@/components/MainBottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 
 type Mode = "login" | "signup";
 type ViewMode = "auth" | "clubs" | "club";
@@ -126,10 +127,15 @@ export default function Home() {
 
   useEffect(() => {
     const loadClubsAndMemberships = async () => {
+      const activeUser = getLoggedInUser();
+      if (!loggedInUser || loggedInUser.name === "회원") {
+        setLoggedInUser(activeUser);
+      }
+
       try {
         const [clubsRes, memRes] = await Promise.all([
           fetch("/api/clubs"),
-          fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(loggedInUser?.name || "김현수")}`),
+          fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(activeUser.name)}`),
         ]);
 
         if (clubsRes.ok) {

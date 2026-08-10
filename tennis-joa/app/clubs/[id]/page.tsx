@@ -274,7 +274,7 @@ export default function ClubPage({ params }: ClubPageProps) {
           </div>
           <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
             <div>
-              <p className="text-xs font-bold text-slate-900">최근 경기: 김현수+강지훈 vs 박수진+이민재</p>
+              <p className="text-xs font-bold text-slate-900">최근 경기: {currentUser.name}+강지훈 vs 박수진+이민재</p>
               <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">결과: 6-4 (우리팀 승리)</p>
             </div>
             <span className="text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded-lg border border-slate-200">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   Trophy,
   CalendarDays,
@@ -64,7 +65,18 @@ export default function TournamentsPage({ params }: Props) {
 
   useEffect(() => {
     loadTournaments();
+    initAttendanceList();
   }, [clubId]);
+
+  function initAttendanceList() {
+    const user = getLoggedInUser();
+    setAttendingUsers((prev) => {
+      if (!prev.includes(user.name)) {
+        return [user.name, ...prev.filter((n) => n !== "김현수")];
+      }
+      return prev;
+    });
+  }
 
   async function loadTournaments() {
     setLoading(true);
@@ -86,6 +98,7 @@ export default function TournamentsPage({ params }: Props) {
 
   function initTournamentView(tour: Tournament) {
     setSelectedTournament(tour);
+    const user = getLoggedInUser();
     
     // 3개 그룹 KDK 대진 초기화 (데이터가 없는 경우 자동 4인 매칭 생성)
     const initMatches: Record<string, KDKMatch[]> = {};
@@ -95,8 +108,8 @@ export default function TournamentsPage({ params }: Props) {
         initMatches[g.groupName] = generate4PlayerKDKMatches(names, g.groupName);
       });
     } else {
-      // 기본 3개 그룹 임시 대진표 생성
-      initMatches["1그룹 (A조)"] = generate4PlayerKDKMatches(["김현수", "강지훈", "박수진", "이민재"], "g1");
+      // 기본 3개 그룹 임시 대진표 생성 (본인 이름 1조에 포함)
+      initMatches["1그룹 (A조)"] = generate4PlayerKDKMatches([user.name, "강지훈", "박수진", "이민재"], "g1");
       initMatches["2그룹 (B조)"] = generate4PlayerKDKMatches(["정다운", "최유진", "윤성민", "한지은"], "g2");
       initMatches["3그룹 (C조)"] = generate4PlayerKDKMatches(["임동현", "장서연", "오세훈", "송미경"], "g3");
     }
@@ -105,7 +118,7 @@ export default function TournamentsPage({ params }: Props) {
 
   function toggleAttendance(status: "ATTENDING" | "ABSENT") {
     setAttendance(status);
-    const myName = "나(회원)";
+    const myName = getLoggedInUser().name;
     if (status === "ATTENDING") {
       if (!attendingUsers.includes(myName)) {
         setAttendingUsers((prev) => [...prev, myName]);
