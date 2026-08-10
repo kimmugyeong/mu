@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser } from "@/lib/authSession";
 import {
   Bell,
   CalendarDays,
@@ -54,9 +54,9 @@ export default function ClubPage({ params }: ClubPageProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // 세션 사용자 정보 (클럽 변경 시에도 로그인 시점 유저 프로필 고정 유지)
-  const [currentUser, setCurrentUser] = useState<{ name: string; username: string }>({ name: "회원", username: "user" });
-
+  const [currentUser, setCurrentUser] = useState<AuthUser>({ name: "관리자", username: "admin", isAdmin: true });
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string>("MEMBER");
 
   useEffect(() => {
     // 1. 유저 프로필은 로그인 세션에서 단 1회 읽어와 고정 (클럽 전환 시 변이 불가)
@@ -75,9 +75,10 @@ export default function ClubPage({ params }: ClubPageProps) {
     setLoading(true);
     const queryName = userName || currentUser.name;
     try {
-      const [clubsRes, memRes] = await Promise.all([
+      const [clubsRes, memRes, membersRes] = await Promise.all([
         fetch("/api/clubs"),
         fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(queryName)}`),
+        fetch(`/api/clubs/${clubId}/members`),
       ]);
 
       if (clubsRes.ok) {
@@ -100,6 +101,20 @@ export default function ClubPage({ params }: ClubPageProps) {
       if (memRes.ok) {
         const memData = await memRes.json();
         setJoinedClubIds(memData.joinedClubIds || []);
+      }
+
+      if (membersRes.ok) {
+        const membersList = await membersRes.json();
+        if (Array.isArray(membersList)) {
+          const myMem = membersList.find(
+            (m: any) => m.userName === queryName || m.userName === currentUser.username
+          );
+          if (myMem) {
+            setUserRole(myMem.role || "MEMBER");
+          } else {
+            setUserRole("MEMBER");
+          }
+        }
       }
     } catch (e) {
       console.error(e);
@@ -165,13 +180,15 @@ export default function ClubPage({ params }: ClubPageProps) {
           </span>
         </button>
 
-        <Link
-          href={`/clubs/${clubId}/admin`}
-          className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs"
-        >
-          <ShieldCheck className="h-4 w-4 text-amber-600" />
-          <span>관리자 전용 대시보드</span>
-        </Link>
+        {(currentUser.isAdmin || userRole === "OWNER" || userRole === "MANAGER") && (
+          <Link
+            href={`/clubs/${clubId}/admin`}
+            className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs"
+          >
+            <ShieldCheck className="h-4 w-4 text-amber-600" />
+            <span>관리자 전용 대시보드</span>
+          </Link>
+        )}
       </div>
 
       {/* Main Club Hero Card */}

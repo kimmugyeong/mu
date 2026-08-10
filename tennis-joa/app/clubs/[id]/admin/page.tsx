@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   ShieldCheck,
   Users,
@@ -50,17 +51,9 @@ export default function ClubAdminPage({ params }: Props) {
   const [currentUser, setCurrentUser] = useState<{ name: string; username: string; role?: string } | null>(null);
 
   useEffect(() => {
-    // 세션 정보 확인
-    const saved = localStorage.getItem("loggedInUser");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setCurrentUser(parsed);
-      } catch (e) {
-        // ignore
-      }
-    }
-    loadMembers();
+    const sessionUser = getLoggedInUser();
+    setCurrentUser(sessionUser);
+    loadMembers(sessionUser);
   }, [clubId]);
 
   function showToast(msg: string) {
@@ -68,13 +61,26 @@ export default function ClubAdminPage({ params }: Props) {
     setTimeout(() => setToastMessage(null), 3000);
   }
 
-  async function loadMembers() {
+  async function loadMembers(sessionUser?: any) {
     setLoading(true);
+    const activeUser = sessionUser || currentUser || getLoggedInUser();
     try {
       const res = await fetch(`/api/clubs/${clubId}/members`);
       if (res.ok) {
-        const data = await res.json();
+        const data: ClubMember[] = await res.json();
         setMembers(data);
+
+        // 라우팅 보안 가드 (Route Guard): 최고관리자가 아니면서 일반 회원(MEMBER)인 경우 튕겨내기
+        if (!activeUser.isAdmin) {
+          const myMem = data.find(
+            (m) => m.userName === activeUser.name || m.userName === activeUser.username
+          );
+          if (myMem && myMem.role === "MEMBER") {
+            alert("접근 권한이 없습니다. 클럽 관리자만 진입할 수 있습니다.");
+            router.replace(`/clubs/${clubId}`);
+            return;
+          }
+        }
       } else {
         showToast("클럽원 목록을 가져오지 못했습니다.");
       }
