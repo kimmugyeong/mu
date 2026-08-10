@@ -101,15 +101,19 @@ export default function Home() {
         body: JSON.stringify({ userName: loggedInUser?.name || "회원" }),
       });
 
-      if (res.ok || res.status === 400) {
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
         setJoinedClubIds((prev) => Array.from(new Set([...prev, club.id])));
         setStatus(`${club.name} 클럽 가입이 승인되었습니다!`);
         openClub(club);
       } else {
-        alert("클럽 가입에 실패했습니다.");
+        console.error("클럽 가입 실패 상세 데이터:", data);
+        alert(data.error || "클럽 가입에 실패했습니다.");
       }
-    } catch {
-      alert("오류가 발생했습니다.");
+    } catch (err) {
+      console.error("클럽 가입 요청 네트워크 에러:", err);
+      alert("클럽 가입 요청 중 오류가 발생했습니다.");
     } finally {
       setJoiningClubId(null);
     }

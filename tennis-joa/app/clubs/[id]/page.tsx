@@ -125,20 +125,16 @@ export default function ClubPage({ params }: ClubPageProps) {
         body: JSON.stringify({ userName }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
+        setJoinedClubIds((prev) => Array.from(new Set([...prev, targetClub.id])));
         showToast(`${targetClub.name}에 자동 승인으로 가입 완료되었습니다! 🎉`);
         setShowSwitchModal(false);
         router.push(`/clubs/${targetClub.id}`);
       } else {
-        const err = await res.json();
-        if (err.member) {
-          // 이미 가입된 경우 바로 이동
-          showToast(`${targetClub.name} 대시보드로 이동합니다.`);
-          setShowSwitchModal(false);
-          router.push(`/clubs/${targetClub.id}`);
-        } else {
-          alert(err.error || "가입 처리에 실패했습니다.");
-        }
+        console.error("클럽 자동 가입 에러:", data);
+        alert(data.error || "가입 처리에 실패했습니다.");
       }
     } catch (e) {
       console.error(e);

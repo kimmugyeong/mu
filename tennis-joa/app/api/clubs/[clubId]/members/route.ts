@@ -14,36 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ club
       ],
     });
 
-    if (dbMembers.length > 0) {
-      return NextResponse.json(dbMembers);
-    }
-
-    // 초기 시드 회원 목록 (데이터가 없을 시 자동 생성)
-    const initialMembers = [
-      { id: "cm1", clubId, userName: "김현수", role: "OWNER", status: "APPROVED", joinedAt: new Date("2026-01-15") },
-      { id: "cm2", clubId, userName: "강지훈", role: "MANAGER", status: "APPROVED", joinedAt: new Date("2026-02-01") },
-      { id: "cm3", clubId, userName: "박수진", role: "MEMBER", status: "APPROVED", joinedAt: new Date("2026-03-10") },
-      { id: "cm4", clubId, userName: "이민재", role: "MEMBER", status: "APPROVED", joinedAt: new Date("2026-04-12") },
-      { id: "cm5", clubId, userName: "정다운", role: "MEMBER", status: "APPROVED", joinedAt: new Date("2026-05-20") },
-    ];
-
-    // DB 시드 저장
-    try {
-      await prisma.clubMember.createMany({
-        data: initialMembers.map((m) => ({
-          clubId: m.clubId,
-          userName: m.userName,
-          role: m.role,
-          status: m.status,
-          joinedAt: m.joinedAt,
-        })),
-        skipDuplicates: true,
-      });
-      const created = await prisma.clubMember.findMany({ where: { clubId } });
-      return NextResponse.json(created);
-    } catch {
-      return NextResponse.json(initialMembers);
-    }
+    return NextResponse.json(dbMembers);
   } catch (e: any) {
     console.error("GET Members error:", e);
     return NextResponse.json({ error: e.message || "회원 목록 조회 실패" }, { status: 500 });
@@ -62,16 +33,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ clu
 
     const userName = body.userName.trim();
 
-    // 이미 가입된 회원이 존재하는지 확인
+    // 1. 외래키(Foreign Key) 오류 예방: DB에 해당 Club이 존재하는지 확인 및 upsert 자동 보장
+    await prisma.club.upsert({
+      where: { id: clubId },
+      update: {},
+      create: {
+        id: clubId,
+        name: clubId === "c1" ? "그린코트 테니스 클럽" : clubId === "c2" ? "잠실 실내 테니스 클럽" : `클럽 ${clubId}`,
+        address: "서울 강남구 테헤란로 123",
+        city: "서울",
+        description: "스마트하게 즐기는 프리미엄 테니스 클럽입니다.",
+      },
+    });
+
+    // 2. 이미 가입된 회원이 존재하는지 확인
     const existing = await prisma.clubMember.findFirst({
       where: { clubId, userName },
     });
 
     if (existing) {
-      return NextResponse.json({ error: "이미 해당 클럽의 회원으로 가입되어 있습니다.", member: existing }, { status: 400 });
+      // 이미 가입된 경우 200 성공 응답으로 가입 상태를 갱신하여 클라이언트가 에러 알림창을 띄우지 않도록 처리
+      return NextResponse.json({
+        message: "이미 해당 클럽의 회원으로 가입되어 있습니다.",
+        member: existing,
+        alreadyJoined: true,
+      });
     }
 
-    // 자동 승인(APPROVED) 상태로 클럽원 즉시 생성
+    // 3. 자동 승인(APPROVED) 상태로 클럽원 즉시 생성
     const newMember = await prisma.clubMember.create({
       data: {
         clubId,
@@ -83,10 +72,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ clu
       },
     });
 
-    return NextResponse.json({ message: "클럽 가입이 자동 승인되었습니다!", member: newMember });
+    console.log(`[Auto-Approved Join] User ${userName} joined club ${clubId}`);
+    return NextResponse.json({ message: "클럽 가입이 자동 승인되었습니다!", member: newMember, alreadyJoined: false });
   } catch (e: any) {
-    console.error("POST Member Join error:", e);
-    return NextResponse.json({ error: e.message || "클럽 가입 처리 중 오류가 발생했습니다." }, { status: 500 });
+    console.error("POST Member Join Critical Error:", e);
+    return NextResponse.json({ error: e.message || "클럽 가입 처리 중 서버 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
