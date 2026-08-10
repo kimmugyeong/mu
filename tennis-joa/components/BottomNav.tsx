@@ -29,14 +29,14 @@ export default function BottomNav({ clubId }: Props) {
             <li key={item.href} className="flex-1 text-center">
               <Link
                 href={item.href}
-                className={`relative inline-flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
+                className={`relative inline-flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all active:scale-95 w-full ${
                   active ? "text-emerald-700 font-bold" : "text-slate-400 hover:text-slate-600 font-medium"
                 }`}
               >
                 {active && (
-                  <span className="absolute -top-1 w-6 h-1 bg-lime-400 rounded-full shadow-sm" />
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-1 bg-lime-400 rounded-full shadow-xs animate-pulse" />
                 )}
-                <Icon className={`h-5 w-5 ${active ? "text-emerald-600" : "text-slate-400"}`} />
+                <Icon className={`h-5 w-5 transition-transform duration-200 ${active ? "text-emerald-600 scale-110" : "text-slate-400"}`} />
                 <span className="text-[11px] tracking-tight">{item.label}</span>
               </Link>
             </li>

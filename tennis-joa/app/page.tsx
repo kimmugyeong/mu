@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus, Shirt, ChevronRight, Lock } from "lucide-react";
 import { validateClubInput } from "@/lib/clubValidation";
+import MainBottomNav from "@/components/MainBottomNav";
 
 type Mode = "login" | "signup";
 type ViewMode = "auth" | "clubs" | "club";
@@ -456,6 +457,21 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <MainBottomNav
+          view="clubs"
+          selectedClubId={selectedClub?.id || (clubs.length > 0 ? clubs[0].id : "c1")}
+          onNavigateHome={() => setView("clubs")}
+          onNavigateTab={(tab) => {
+            if (clubs.length > 0) {
+              setSelectedClub(clubs[0]);
+              setActiveTab(tab);
+              setView("club");
+            }
+          }}
+          onNavigateAuth={() => setView("auth")}
+          loggedInUser={loggedInUser}
+        />
       </main>
     );
   }
@@ -718,6 +734,16 @@ export default function Home() {
             )}
           </div>
         </section>
+
+        <MainBottomNav
+          view="club"
+          selectedClubId={selectedClub.id}
+          activeTab={activeTab}
+          onNavigateHome={() => setView("clubs")}
+          onNavigateTab={(tab) => setActiveTab(tab)}
+          onNavigateAuth={() => setView("auth")}
+          loggedInUser={loggedInUser}
+        />
       </main>
     );
   }
@@ -874,6 +900,17 @@ export default function Home() {
           </form>
         )}
       </section>
+
+      <MainBottomNav
+        view="auth"
+        selectedClubId={selectedClub?.id}
+        onNavigateHome={() => setView("clubs")}
+        onNavigateTab={(tab) => {
+          setView("clubs");
+        }}
+        onNavigateAuth={() => setView("auth")}
+        loggedInUser={loggedInUser}
+      />
     </main>
   );
 }
