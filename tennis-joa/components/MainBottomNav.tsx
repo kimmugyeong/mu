@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Shirt, Trophy, Bell, UserCheck, User } from "lucide-react";
+import { Home, Bell, Trophy, Activity, ShoppingBag } from "lucide-react";
 
 type MainBottomNavProps = {
   view: "auth" | "clubs" | "club";
@@ -45,47 +45,53 @@ export default function MainBottomNav({
   const items = [
     {
       id: "home",
-      label: "홈/클럽",
+      label: "홈",
       icon: Home,
-      isActive: (view === "clubs" || view === "club") && !isMerchandisePage && activeTab !== "merch" && activeTab !== "tournaments" && activeTab !== "tournament" && activeTab !== "notices",
+      isActive: (view === "clubs" || (view === "club" && activeTab !== "notices" && activeTab !== "tournaments" && activeTab !== "matches" && activeTab !== "merch")) && !isMerchandisePage,
       onClick: () => {
         if (onNavigateHome) onNavigateHome();
         else router.push("/");
       },
     },
     {
-      id: "merch",
-      label: "수요조사",
-      icon: Shirt,
-      isActive: isMerchandisePage || (view === "club" && activeTab === "merch"),
-      onClick: handleMerchandiseClick,
+      id: "notices",
+      label: "공지",
+      icon: Bell,
+      isActive: pathname?.includes("/notices") || (view === "club" && activeTab === "notices"),
+      onClick: () => {
+        if (selectedClubId) router.push(`/clubs/${selectedClubId}/notices`);
+        else if (onNavigateTab) onNavigateTab("notices");
+        else router.push("/clubs/c1/notices");
+      },
     },
     {
       id: "tournaments",
       label: "월례회",
       icon: Trophy,
-      isActive: view === "club" && (activeTab === "tournaments" || activeTab === "tournament"),
+      isActive: pathname?.includes("/tournaments") || (view === "club" && (activeTab === "tournaments" || activeTab === "tournament")),
       onClick: () => {
-        if (onNavigateTab) onNavigateTab("tournaments");
+        if (selectedClubId) router.push(`/clubs/${selectedClubId}/tournaments`);
+        else if (onNavigateTab) onNavigateTab("tournaments");
+        else router.push("/clubs/c1/tournaments");
       },
     },
     {
-      id: "notices",
-      label: "공지사항",
-      icon: Bell,
-      isActive: view === "club" && activeTab === "notices",
+      id: "matches",
+      label: "경기전적",
+      icon: Activity,
+      isActive: pathname?.includes("/matches") || (view === "club" && activeTab === "matches"),
       onClick: () => {
-        if (onNavigateTab) onNavigateTab("notices");
+        if (selectedClubId) router.push(`/clubs/${selectedClubId}/matches`);
+        else if (onNavigateTab) onNavigateTab("matches");
+        else router.push("/clubs/c1/matches");
       },
     },
     {
-      id: "profile",
-      label: loggedInUser ? "내 정보" : "로그인",
-      icon: loggedInUser ? UserCheck : User,
-      isActive: view === "auth",
-      onClick: () => {
-        if (onNavigateAuth) onNavigateAuth();
-      },
+      id: "merch",
+      label: "단체복",
+      icon: ShoppingBag,
+      isActive: isMerchandisePage || (view === "club" && activeTab === "merch"),
+      onClick: handleMerchandiseClick,
     },
   ];
 

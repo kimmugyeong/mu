@@ -12,7 +12,7 @@ export default function BottomNav({ clubId }: Props) {
   const pathname = usePathname();
 
   const items = [
-    { href: `/clubs/${clubId}`, label: "홈", icon: Home },
+    { href: "/", label: "홈", icon: Home },
     { href: `/clubs/${clubId}/notices`, label: "공지", icon: Bell },
     { href: `/clubs/${clubId}/tournaments`, label: "월례회", icon: Trophy },
     { href: `/clubs/${clubId}/matches`, label: "경기전적", icon: Activity },
@@ -23,7 +23,10 @@ export default function BottomNav({ clubId }: Props) {
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md sm:max-w-lg z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md shadow-lg py-1 px-2 rounded-t-2xl">
       <ul className="flex justify-around items-center">
         {items.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(item.href + "/");
+          const active =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
           const Icon = item.icon;
           return (
             <li key={item.href} className="flex-1 text-center">
