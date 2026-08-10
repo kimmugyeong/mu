@@ -57,10 +57,15 @@ export default function MainBottomNav({
       id: "home",
       label: "홈",
       icon: Home,
-      isActive: (view === "clubs" || (view === "club" && activeTab !== "notices" && activeTab !== "tournaments" && activeTab !== "matches" && activeTab !== "merch")) && !isMerchandisePage,
+      isActive: (pathname === `/clubs/${selectedClubId}` || view === "clubs" || (view === "club" && activeTab !== "notices" && activeTab !== "tournaments" && activeTab !== "matches" && activeTab !== "merch")) && !isMerchandisePage,
       onClick: () => {
-        if (onNavigateHome) onNavigateHome();
-        else router.push("/");
+        if (selectedClubId) {
+          router.push(`/clubs/${selectedClubId}`);
+        } else if (onNavigateHome) {
+          onNavigateHome();
+        } else {
+          router.push("/clubs/c1");
+        }
       },
     },
     {

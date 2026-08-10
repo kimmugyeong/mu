@@ -12,7 +12,7 @@ export default function BottomNav({ clubId }: Props) {
   const pathname = usePathname();
 
   const items = [
-    { href: "/", label: "홈", icon: Home },
+    { href: `/clubs/${clubId}`, label: "홈", icon: Home },
     { href: `/clubs/${clubId}/notices`, label: "공지", icon: Bell },
     { href: `/clubs/${clubId}/tournaments`, label: "월례회", icon: Trophy },
     { href: `/clubs/${clubId}/matches`, label: "경기전적", icon: Activity },

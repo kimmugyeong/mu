@@ -64,6 +64,21 @@ model Club {
   merchandises Merchandise[]
   matchRecords MatchRecord[]
   tournaments  MonthlyTournament[]
+  members      ClubMember[]
+}
+
+model ClubMember {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId    String?
+  userName  String
+  userEmail String?
+  role      String   @default("MEMBER") // OWNER, MANAGER, MEMBER
+  status    String   @default("APPROVED") // APPROVED (자동 승인)
+  joinedAt  DateTime @default(now())
+
+  @@unique([clubId, userName])
 }
 
 model ClubNotice {
