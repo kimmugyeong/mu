@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   Activity,
   PlusCircle,
@@ -85,18 +86,8 @@ export default function MatchesPage({ params }: Props) {
   }, [clubId]);
 
   function initLoggedInUser() {
-    try {
-      const savedUser = localStorage.getItem("loggedInUser");
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        const userName = u.name || u.username || "김현수";
-        setPlayer1Name(userName);
-      } else {
-        setPlayer1Name("김현수");
-      }
-    } catch {
-      setPlayer1Name("김현수");
-    }
+    const user = getLoggedInUser();
+    setPlayer1Name(user.name);
   }
 
   async function loadMatches() {
@@ -131,44 +122,36 @@ export default function MatchesPage({ params }: Props) {
         }
       }
 
-      // 데이터가 없거나 로딩 실패 시 폴백 회원 목록 바인딩
-      if (memberList.length === 0) {
-        memberList = [
-          { id: "u1", name: "김현수", username: "hyunsoo", ntrp: 3.5 },
-          { id: "u2", name: "강지훈", username: "jihoon", ntrp: 4.0 },
-          { id: "u3", name: "박수진", username: "sujin", ntrp: 3.0 },
-          { id: "u4", name: "이민재", username: "minjae", ntrp: 3.5 },
-          { id: "u5", name: "정다운", username: "dawoon", ntrp: 3.5 },
-          { id: "u6", name: "최유진", username: "yujin", ntrp: 3.0 },
-        ];
+      const sessionUser = getLoggedInUser();
+      const currentLoginName = sessionUser.name;
+
+      // 로그인 유저가 드롭다운 목록에 포함되도록 보장
+      if (!memberList.some((m) => m.name === currentLoginName)) {
+        memberList.unshift({
+          id: sessionUser.id || "u_me",
+          name: currentLoginName,
+          username: sessionUser.username,
+          ntrp: 3.5,
+        });
       }
 
       setMembers(memberList);
 
-      // 본인 이름을 1순위로 유지하고, 나머지 선수 2/상대선수에 클럽원 기본 지정
-      const currentLoginName = (() => {
-        try {
-          const s = localStorage.getItem("loggedInUser");
-          return s ? JSON.parse(s).name || "김현수" : "김현수";
-        } catch {
-          return "김현수";
-        }
-      })();
-
       setPlayer1Name(currentLoginName);
-      setPlayer2Name(memberList.find((m) => m.name !== currentLoginName)?.name || memberList[0].name);
-      setOpponent1Name(memberList[1]?.name || memberList[0].name);
-      setOpponent2Name(memberList[2]?.name || memberList[0].name);
+      setPlayer2Name(memberList.find((m) => m.name !== currentLoginName)?.name || memberList[0]?.name || "상대선수");
+      setOpponent1Name(memberList[1]?.name || memberList[0]?.name || "상대선수 1");
+      setOpponent2Name(memberList[2]?.name || memberList[0]?.name || "상대선수 2");
     } catch (e) {
       console.error("회원 목록 불러오기 에러:", e);
+      const sessionUser = getLoggedInUser();
       const fallbackList = [
-        { id: "u1", name: "김현수", username: "hyunsoo", ntrp: 3.5 },
+        { id: "u_me", name: sessionUser.name, username: sessionUser.username, ntrp: 3.5 },
         { id: "u2", name: "강지훈", username: "jihoon", ntrp: 4.0 },
         { id: "u3", name: "박수진", username: "sujin", ntrp: 3.0 },
         { id: "u4", name: "이민재", username: "minjae", ntrp: 3.5 },
       ];
       setMembers(fallbackList);
-      setPlayer1Name("김현수");
+      setPlayer1Name(sessionUser.name);
       setPlayer2Name("강지훈");
       setOpponent1Name("박수진");
       setOpponent2Name("이민재");

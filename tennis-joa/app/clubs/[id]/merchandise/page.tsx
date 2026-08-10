@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   ShoppingBag,
   PlusCircle,
@@ -137,18 +138,9 @@ export default function MerchandisePage({ params }: Props) {
     }
 
     // 본인 이름 자동 연동
-    const savedUser = localStorage.getItem("loggedInUser");
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        setApplicantName(parsed.name || parsed.username || "회원");
-        setUserId(parsed.username || parsed.id || "user_guest");
-      } catch (e) {
-        setApplicantName("익명회원");
-      }
-    } else {
-      if (!applicantName) setApplicantName("김현수 (회원)");
-    }
+    const user = getLoggedInUser();
+    setApplicantName(user.name);
+    setUserId(user.username || user.id || "user_guest");
 
     setSelectedMerch(item);
     setSelectedColor(item.colors && item.colors.length ? item.colors[0] : "");

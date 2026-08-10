@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
+import { getLoggedInUser } from "@/lib/authSession";
 import {
   Bell,
   CalendarDays,
@@ -52,24 +53,17 @@ export default function ClubPage({ params }: ClubPageProps) {
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // 세션 사용자 정보
-  const [currentUser, setCurrentUser] = useState<{ name: string; username: string } | null>(null);
+  // 세션 사용자 정보 (클럽 변경 시에도 로그인 시점 유저 프로필 고정 유지)
+  const [currentUser, setCurrentUser] = useState<{ name: string; username: string }>({ name: "회원", username: "user" });
 
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("loggedInUser");
-    if (saved) {
-      try {
-        setCurrentUser(JSON.parse(saved));
-      } catch (e) {
-        // ignore
-      }
-    } else {
-      setCurrentUser({ name: "김현수", username: "hyunsoo" });
-    }
+    // 1. 유저 프로필은 로그인 세션에서 단 1회 읽어와 고정 (클럽 전환 시 변이 불가)
+    const activeUser = getLoggedInUser();
+    setCurrentUser(activeUser);
 
-    loadClubData();
+    loadClubData(activeUser.name);
   }, [clubId]);
 
   function showToast(msg: string) {
@@ -77,12 +71,13 @@ export default function ClubPage({ params }: ClubPageProps) {
     setTimeout(() => setToastMessage(null), 3000);
   }
 
-  async function loadClubData() {
+  async function loadClubData(userName?: string) {
     setLoading(true);
+    const queryName = userName || currentUser.name;
     try {
       const [clubsRes, memRes] = await Promise.all([
         fetch("/api/clubs"),
-        fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(currentUser?.name || "김현수")}`),
+        fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(queryName)}`),
       ]);
 
       if (clubsRes.ok) {
