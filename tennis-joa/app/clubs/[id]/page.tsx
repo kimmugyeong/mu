@@ -55,6 +55,8 @@ export default function ClubPage({ params }: ClubPageProps) {
   // 세션 사용자 정보
   const [currentUser, setCurrentUser] = useState<{ name: string; username: string } | null>(null);
 
+  const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
+
   useEffect(() => {
     const saved = localStorage.getItem("loggedInUser");
     if (saved) {
@@ -78,9 +80,13 @@ export default function ClubPage({ params }: ClubPageProps) {
   async function loadClubData() {
     setLoading(true);
     try {
-      const res = await fetch("/api/clubs");
-      if (res.ok) {
-        const clubsData: Club[] = await res.json();
+      const [clubsRes, memRes] = await Promise.all([
+        fetch("/api/clubs"),
+        fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(currentUser?.name || "김현수")}`),
+      ]);
+
+      if (clubsRes.ok) {
+        const clubsData: Club[] = await clubsRes.json();
         setAllClubs(clubsData);
         const matched = clubsData.find((c) => c.id === clubId);
         if (matched) {
@@ -94,6 +100,11 @@ export default function ClubPage({ params }: ClubPageProps) {
             description: "매주 주말과 새벽 모임을 개최하는 프리미엄 테니스 커뮤니티입니다.",
           });
         }
+      }
+
+      if (memRes.ok) {
+        const memData = await memRes.json();
+        setJoinedClubIds(memData.joinedClubIds || []);
       }
     } catch (e) {
       console.error(e);
@@ -325,6 +336,7 @@ export default function ClubPage({ params }: ClubPageProps) {
               <div className="space-y-2">
                 {allClubs.map((club) => {
                   const isCurrent = club.id === clubId;
+                  const isJoined = joinedClubIds.includes(club.id);
                   const isJoining = joiningClubId === club.id;
 
                   return (
@@ -339,11 +351,15 @@ export default function ClubPage({ params }: ClubPageProps) {
                       <div>
                         <div className="flex items-center gap-1.5">
                           <h4 className="font-bold text-slate-900 text-xs">{club.name}</h4>
-                          {isCurrent && (
+                          {isCurrent ? (
                             <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded">
                               현재 접속중
                             </span>
-                          )}
+                          ) : isJoined ? (
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                              가입됨
+                            </span>
+                          ) : null}
                         </div>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           {club.city} · {club.address}
@@ -356,6 +372,16 @@ export default function ClubPage({ params }: ClubPageProps) {
                           className="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200 shrink-0"
                         >
                           접속중
+                        </button>
+                      ) : isJoined ? (
+                        <button
+                          onClick={() => {
+                            setShowSwitchModal(false);
+                            router.push(`/clubs/${club.id}`);
+                          }}
+                          className="px-3 py-1.5 bg-lime-100 text-lime-900 hover:bg-lime-200 text-xs font-bold rounded-lg transition shrink-0"
+                        >
+                          입장하기 →
                         </button>
                       ) : (
                         <button

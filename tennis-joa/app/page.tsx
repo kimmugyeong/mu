@@ -77,6 +77,9 @@ export default function Home() {
   const [matchForm, setMatchForm] = useState({ matchType: "DOUBLE", player1Id: "", player2Id: "", opponent1Name: "", opponent2Name: "", score: "", isWin: true });
   const [tournamentForm, setTournamentForm] = useState({ title: "", eventDate: "", players: "" });
 
+  const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
+  const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
+
   const updateField = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -87,29 +90,62 @@ export default function Home() {
     setView("club");
   };
 
+  const handleJoinAndOpenClub = async (e: React.MouseEvent, club: Club) => {
+    e.stopPropagation();
+    setJoiningClubId(club.id);
+
+    try {
+      const res = await fetch(`/api/clubs/${club.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName: loggedInUser?.name || "회원" }),
+      });
+
+      if (res.ok || res.status === 400) {
+        setJoinedClubIds((prev) => Array.from(new Set([...prev, club.id])));
+        setStatus(`${club.name} 클럽 가입이 승인되었습니다!`);
+        openClub(club);
+      } else {
+        alert("클럽 가입에 실패했습니다.");
+      }
+    } catch {
+      alert("오류가 발생했습니다.");
+    } finally {
+      setJoiningClubId(null);
+    }
+  };
+
   const goToClubs = () => {
     setSelectedClub(null);
     setView("clubs");
   };
 
   useEffect(() => {
-    const loadClubs = async () => {
+    const loadClubsAndMemberships = async () => {
       try {
-        const response = await fetch("/api/clubs");
-        if (!response.ok) {
-          return;
+        const [clubsRes, memRes] = await Promise.all([
+          fetch("/api/clubs"),
+          fetch(`/api/clubs/my-memberships?username=${encodeURIComponent(loggedInUser?.name || "김현수")}`),
+        ]);
+
+        if (clubsRes.ok) {
+          const data = await clubsRes.json();
+          setClubs(data);
         }
-        const data = await response.json();
-        setClubs(data);
+
+        if (memRes.ok) {
+          const memData = await memRes.json();
+          setJoinedClubIds(memData.joinedClubIds || []);
+        }
       } catch {
         // ignore
       }
     };
 
     if (view === "clubs") {
-      loadClubs();
+      loadClubsAndMemberships();
     }
-  }, [view]);
+  }, [view, loggedInUser]);
 
   useEffect(() => {
     if (!selectedClub) return;
@@ -435,25 +471,58 @@ export default function Home() {
             ) : null}
 
             <div className="mt-4 space-y-3">
-              {clubs.map((club) => (
-                <button
-                  key={club.id}
-                  type="button"
-                  onClick={() => openClub(club)}
-                  className="w-full text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{club.name}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{club.address} · {club.city}</p>
+              {clubs.map((club) => {
+                const isJoined = joinedClubIds.includes(club.id);
+                const isJoining = joiningClubId === club.id;
+
+                return (
+                  <div
+                    key={club.id}
+                    onClick={() => {
+                      if (isJoined) openClub(club);
+                    }}
+                    className={`w-full text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 group ${
+                      isJoined ? "cursor-pointer" : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                            {club.name}
+                          </p>
+                          {isJoined && (
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded">
+                              가입됨
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">{club.address} · {club.city}</p>
+                      </div>
+
+                      {isJoined ? (
+                        <button
+                          type="button"
+                          onClick={() => openClub(club)}
+                          className="bg-lime-100 text-lime-900 hover:bg-lime-200 text-xs font-bold px-3 py-1.5 rounded-xl transition shrink-0"
+                        >
+                          입장하기 →
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isJoining}
+                          onClick={(e) => handleJoinAndOpenClub(e, club)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition shrink-0"
+                        >
+                          {isJoining ? "가입중..." : "+ 가입하기"}
+                        </button>
+                      )}
                     </div>
-                    <span className="bg-lime-100 text-lime-900 text-xs font-bold px-2.5 py-1 rounded-full">
-                      입장하기 →
-                    </span>
+                    <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">{club.description}</p>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">{club.description}</p>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
