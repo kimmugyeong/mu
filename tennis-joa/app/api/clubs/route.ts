@@ -3,9 +3,23 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const clubs = await prisma.club.findMany({
+    let clubs = await prisma.club.findMany({
       orderBy: { createdAt: "desc" },
     });
+
+    if (clubs.length === 0) {
+      const defaultClub = await prisma.club.create({
+        data: {
+          name: "CWNU",
+          address: "창원대학로",
+          city: "창원",
+          description: "창원대학교 직원 테니스",
+          contactPhone: "055-213-2000",
+          contactEmail: "cwnu@tennis.ac.kr",
+        },
+      });
+      clubs = [defaultClub];
+    }
 
     return NextResponse.json(clubs);
   } catch (error) {

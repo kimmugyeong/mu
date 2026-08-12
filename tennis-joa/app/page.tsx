@@ -88,7 +88,7 @@ export default function Home() {
 
   const openClub = (club: Club) => {
     setSelectedClub(club);
-    setView("club");
+    router.push(`/clubs/${club.id}`);
   };
 
   const handleJoinAndOpenClub = async (e: React.MouseEvent, club: Club) => {
