@@ -58,6 +58,12 @@ export default function ClubPage({ params }: ClubPageProps) {
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<string>("MEMBER");
 
+  // 전체 회원 명단 조회 모달 state
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [clubMembersList, setClubMembersList] = useState<any[]>([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [membersLoading, setMembersLoading] = useState(false);
+
   useEffect(() => {
     // 1. 유저 프로필은 로그인 세션에서 단 1회 읽어와 고정 (클럽 전환 시 변이 불가)
     const activeUser = getLoggedInUser();
@@ -105,6 +111,7 @@ export default function ClubPage({ params }: ClubPageProps) {
 
       if (membersRes.ok) {
         const membersList = await membersRes.json();
+        setClubMembersList(membersList);
         if (Array.isArray(membersList)) {
           const myMem = membersList.find(
             (m: any) => m.userName === queryName || m.userName === currentUser.username
@@ -120,6 +127,22 @@ export default function ClubPage({ params }: ClubPageProps) {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function openMembersModal() {
+    setShowMembersModal(true);
+    setMembersLoading(true);
+    try {
+      const res = await fetch(`/api/clubs/${clubId}/members`);
+      if (res.ok) {
+        const data = await res.json();
+        setClubMembersList(data);
+      }
+    } catch (e) {
+      console.error("전체 회원 불러오기 오류:", e);
+    } finally {
+      setMembersLoading(false);
     }
   }
 
@@ -168,17 +191,24 @@ export default function ClubPage({ params }: ClubPageProps) {
       )}
 
       {/* Top Switcher Bar */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setShowSwitchModal(true)}
-          className="inline-flex items-center gap-2 bg-white text-emerald-800 border border-emerald-200 shadow-2xs hover:bg-emerald-50 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all"
-        >
-          <ArrowRightLeft className="h-3.5 w-3.5 text-emerald-600" />
-          <span>다른 클럽 선택하기</span>
-          <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.2 rounded-md">
-            전환
-          </span>
-        </button>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSwitchModal(true)}
+            className="inline-flex items-center gap-1.5 bg-white text-emerald-800 border border-emerald-200 shadow-2xs hover:bg-emerald-50 px-3 py-2 rounded-xl text-xs font-extrabold transition-all"
+          >
+            <ArrowRightLeft className="h-3.5 w-3.5 text-emerald-600" />
+            <span>클럽 전환</span>
+          </button>
+
+          <button
+            onClick={openMembersModal}
+            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs px-3 py-2 rounded-xl text-xs font-extrabold transition-all"
+          >
+            <Users className="h-3.5 w-3.5" />
+            <span>전체 회원 명단</span>
+          </button>
+        </div>
 
         {isAdminUser(currentUser) && (
           <Link
@@ -186,7 +216,7 @@ export default function ClubPage({ params }: ClubPageProps) {
             className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs"
           >
             <ShieldCheck className="h-4 w-4 text-amber-600" />
-            <span>관리자 전용 대시보드</span>
+            <span>관리자 대시보드</span>
           </Link>
         )}
       </div>
@@ -216,10 +246,18 @@ export default function ClubPage({ params }: ClubPageProps) {
           </p>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-            <div className="bg-white/10 backdrop-blur-xs rounded-xl p-2 border border-white/10">
-              <p className="text-[10px] text-teal-100 uppercase">전체 회원</p>
-              <p className="text-base font-extrabold text-white mt-0.5">128명</p>
-            </div>
+            <button
+              onClick={openMembersModal}
+              className="bg-white/10 hover:bg-white/20 active:scale-95 transition backdrop-blur-xs rounded-xl p-2 border border-white/20 text-left flex flex-col justify-between cursor-pointer group"
+            >
+              <div className="flex items-center justify-between w-full">
+                <p className="text-[10px] text-teal-100 uppercase font-bold">전체 회원</p>
+                <Users className="h-3 w-3 text-lime-300 group-hover:scale-110 transition-transform" />
+              </div>
+              <p className="text-base font-extrabold text-white mt-0.5">
+                {clubMembersList.length > 0 ? `${clubMembersList.length}명` : "128명"}
+              </p>
+            </button>
             <div className="bg-white/10 backdrop-blur-xs rounded-xl p-2 border border-white/10">
               <p className="text-[10px] text-teal-100 uppercase">이번 달 월례회</p>
               <p className="text-base font-extrabold text-lime-300 mt-0.5">3회</p>
@@ -410,6 +448,93 @@ export default function ClubPage({ params }: ClubPageProps) {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Members List Modal */}
+      {showMembersModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100 max-h-[85vh] flex flex-col">
+            <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-lime-300" />
+                <h3 className="text-sm font-bold">
+                  전체 회원 명단 ({clubMembersList.length}명)
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowMembersModal(false)}
+                className="text-white/80 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-white/10"
+              >
+                ✕ 닫기
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+              {/* Member Search */}
+              <input
+                type="text"
+                value={memberSearchQuery}
+                onChange={(e) => setMemberSearchQuery(e.target.value)}
+                placeholder="회원 이름 검색..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 focus:bg-white transition"
+              />
+
+              {membersLoading ? (
+                <div className="py-8 text-center text-xs text-slate-400">회원 명단을 불러오는 중...</div>
+              ) : (
+                <div className="space-y-2">
+                  {clubMembersList
+                    .filter((m) =>
+                      (m.userName || m.name || "").toLowerCase().includes(memberSearchQuery.toLowerCase())
+                    )
+                    .map((m, idx) => {
+                      const name = m.userName || m.name || `회원 ${idx + 1}`;
+                      const role = m.role || "MEMBER";
+                      const isOwner = role === "OWNER";
+                      const isManager = role === "MANAGER";
+
+                      return (
+                        <div
+                          key={m.id || idx}
+                          className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-100/80 transition"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs shrink-0">
+                              {name.slice(0, 1)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-900 text-xs">{name}</span>
+                                {isOwner ? (
+                                  <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-extrabold px-1.5 py-0.2 rounded">
+                                    👑 소유자
+                                  </span>
+                                ) : isManager ? (
+                                  <span className="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded">
+                                    🛡 매니저
+                                  </span>
+                                ) : (
+                                  <span className="bg-slate-200 text-slate-700 text-[9px] font-semibold px-1.5 py-0.2 rounded">
+                                    회원
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                가입상태: {m.status || "APPROVED (자동승인)"}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "최근가입"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
         </div>
