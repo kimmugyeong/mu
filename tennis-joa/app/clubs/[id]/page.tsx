@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser, AuthUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   Bell,
   CalendarDays,
@@ -53,8 +53,8 @@ export default function ClubPage({ params }: ClubPageProps) {
   const [joiningClubId, setJoiningClubId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // 세션 사용자 정보 (클럽 변경 시에도 로그인 시점 유저 프로필 고정 유지)
-  const [currentUser, setCurrentUser] = useState<AuthUser>({ name: "관리자", username: "admin", isAdmin: true });
+  // 세션 사용자 정보
+  const [currentUser, setCurrentUser] = useState<AuthUser>({ id: "", name: "방문자", username: "", role: "USER", isAdmin: false });
   const [joinedClubIds, setJoinedClubIds] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<string>("MEMBER");
 
@@ -180,7 +180,7 @@ export default function ClubPage({ params }: ClubPageProps) {
           </span>
         </button>
 
-        {(currentUser.isAdmin || userRole === "OWNER" || userRole === "MANAGER") && (
+        {isAdminUser(currentUser) && (
           <Link
             href={`/clubs/${clubId}/admin`}
             className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs"

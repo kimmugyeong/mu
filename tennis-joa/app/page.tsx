@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Bell, CalendarDays, CheckCircle2, ClipboardList, MapPin, MessageCircle, Settings2, Share2, ShoppingBag, Trophy, Users, UserPlus, Shirt, ChevronRight, Lock } from "lucide-react";
 import { validateClubInput } from "@/lib/clubValidation";
 import MainBottomNav from "@/components/MainBottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 
 type Mode = "login" | "signup";
 type ViewMode = "auth" | "clubs" | "club";
@@ -59,7 +59,7 @@ export default function Home() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState("");
-  const [loggedInUser, setLoggedInUser] = useState<{ name: string; username: string; isAdmin?: boolean } | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<AuthUser | null>(null);
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -346,8 +346,17 @@ export default function Home() {
         return;
       }
 
-      const isAdmin = result.user.username === "admin";
-      setLoggedInUser({ name: result.user.name, username: result.user.username, isAdmin });
+      const userData: AuthUser = {
+        id: result.user.id || result.user.username,
+        name: result.user.name,
+        username: result.user.username,
+        role: result.user.role || (result.user.username === "admin" ? "admin" : "user"),
+        isAdmin: Boolean(result.user.isAdmin || result.user.role === "admin" || result.user.username === "admin"),
+      };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("loggedInUser", JSON.stringify(userData));
+      }
+      setLoggedInUser(userData);
       setStatus(`${result.user.name}님, 환영합니다.`);
       setForm((prev) => ({ ...prev, password: "" }));
       setView("clubs");
@@ -427,7 +436,7 @@ export default function Home() {
                 <h2 className="text-lg font-bold text-slate-900">클럽 찾기</h2>
                 <p className="text-xs text-slate-500 mt-0.5">등록된 동호회 목록입니다.</p>
               </div>
-              {loggedInUser?.isAdmin ? (
+              {isAdminUser(loggedInUser) ? (
                 <button
                   type="button"
                   onClick={() => setShowCreateForm((prev) => !prev)}

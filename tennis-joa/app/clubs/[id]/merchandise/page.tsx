@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   ShoppingBag,
   PlusCircle,
@@ -83,7 +83,12 @@ export default function MerchandisePage({ params }: Props) {
   });
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
   useEffect(() => {
+    const user = getLoggedInUser();
+    setCurrentUser(user);
+
     // Try to prefill user info from localStorage if present
     const savedUser = localStorage.getItem("loggedInUser");
     if (savedUser) {
@@ -326,19 +331,21 @@ export default function MerchandisePage({ params }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsAdminMode((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shadow-xs ${
-                isAdminMode
-                  ? "bg-slate-900 text-white hover:bg-slate-800"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-              {isAdminMode ? "관리자 모드 ON" : "관리자 모드"}
-            </button>
-          </div>
+          {isAdminUser(currentUser) && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsAdminMode((v) => !v)}
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shadow-xs ${
+                  isAdminMode
+                    ? "bg-slate-900 text-white hover:bg-slate-800"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                {isAdminMode ? "관리자 모드 ON" : "관리자 모드"}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -403,7 +410,7 @@ export default function MerchandisePage({ params }: Props) {
             </button>
           </div>
 
-          {isAdminMode && (
+          {isAdminUser(currentUser) && isAdminMode && (
             <button
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"

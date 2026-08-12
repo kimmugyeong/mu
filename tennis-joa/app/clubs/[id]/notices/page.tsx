@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   Bell,
   PlusCircle,
@@ -44,6 +44,7 @@ export default function NoticesPage({ params }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Admin state
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [title, setTitle] = useState("");
@@ -52,6 +53,7 @@ export default function NoticesPage({ params }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    setCurrentUser(getLoggedInUser());
     loadNotices();
   }, [clubId]);
 
@@ -138,16 +140,18 @@ export default function NoticesPage({ params }: Props) {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsAdminMode((p) => !p)}
-            className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
-              isAdminMode
-                ? "bg-amber-50 text-amber-700 border-amber-200"
-                : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-            }`}
-          >
-            {isAdminMode ? "관리자 켜짐" : "운영진 모드"}
-          </button>
+          {isAdminUser(currentUser) && (
+            <button
+              onClick={() => setIsAdminMode((p) => !p)}
+              className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
+                isAdminMode
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+              }`}
+            >
+              {isAdminMode ? "관리자 켜짐" : "운영진 모드"}
+            </button>
+          )}
         </div>
       </header>
 
@@ -164,7 +168,7 @@ export default function NoticesPage({ params }: Props) {
                 필독 공지 {importantCount}건 포함 · 총 {notices.length}건 등록됨
               </p>
             </div>
-            {isAdminMode && (
+            {isAdminUser(currentUser) && isAdminMode && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-lime-400 hover:bg-lime-300 text-slate-950 text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition flex items-center gap-1"

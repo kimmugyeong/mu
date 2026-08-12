@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   Trophy,
   CalendarDays,
@@ -54,6 +54,7 @@ export default function TournamentsPage({ params }: Props) {
   ]);
 
   // Admin & Form state
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [title, setTitle] = useState("");
@@ -64,6 +65,7 @@ export default function TournamentsPage({ params }: Props) {
   const [groupMatches, setGroupMatches] = useState<Record<string, KDKMatch[]>>({});
 
   useEffect(() => {
+    setCurrentUser(getLoggedInUser());
     loadTournaments();
     initAttendanceList();
   }, [clubId]);
@@ -200,16 +202,18 @@ export default function TournamentsPage({ params }: Props) {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsAdminMode((p) => !p)}
-            className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
-              isAdminMode
-                ? "bg-amber-50 text-amber-700 border-amber-200"
-                : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-            }`}
-          >
-            {isAdminMode ? "관리자 켜짐" : "운영진 모드"}
-          </button>
+          {isAdminUser(currentUser) && (
+            <button
+              onClick={() => setIsAdminMode((p) => !p)}
+              className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
+                isAdminMode
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+              }`}
+            >
+              {isAdminMode ? "관리자 켜짐" : "운영진 모드"}
+            </button>
+          )}
         </div>
       </header>
 
@@ -220,7 +224,7 @@ export default function TournamentsPage({ params }: Props) {
             <span className="bg-lime-300 text-slate-950 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <Sparkles className="h-3 w-3" /> 공식 월례회
             </span>
-            {isAdminMode && (
+            {isAdminUser(currentUser) && isAdminMode && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1"
@@ -374,11 +378,12 @@ export default function TournamentsPage({ params }: Props) {
                             min="0"
                             max="12"
                             value={m.team1Score ?? ""}
+                            disabled={!isAdminUser(currentUser) || !isAdminMode}
                             onChange={(e) =>
                               handleScoreChange(groupName, m.id, 1, e.target.value)
                             }
                             placeholder="0"
-                            className="w-9 h-8 text-center text-xs font-bold border border-slate-300 rounded-lg outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 bg-white"
+                            className="w-9 h-8 text-center text-xs font-bold border border-slate-300 rounded-lg outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 bg-white disabled:bg-slate-100 disabled:text-slate-500"
                           />
                           <span className="text-slate-400 font-bold">:</span>
                           <input
@@ -386,11 +391,12 @@ export default function TournamentsPage({ params }: Props) {
                             min="0"
                             max="12"
                             value={m.team2Score ?? ""}
+                            disabled={!isAdminUser(currentUser) || !isAdminMode}
                             onChange={(e) =>
                               handleScoreChange(groupName, m.id, 2, e.target.value)
                             }
                             placeholder="0"
-                            className="w-9 h-8 text-center text-xs font-bold border border-slate-300 rounded-lg outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 bg-white"
+                            className="w-9 h-8 text-center text-xs font-bold border border-slate-300 rounded-lg outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 bg-white disabled:bg-slate-100 disabled:text-slate-500"
                           />
                         </div>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   Activity,
   PlusCircle,
@@ -53,6 +53,7 @@ export default function MatchesPage({ params }: Props) {
   const [activeView, setActiveView] = useState<"RECORDS" | "LEADERBOARD">("RECORDS");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   // Input Form Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [matchDate, setMatchDate] = useState(new Date().toISOString().slice(0, 10));
@@ -87,7 +88,10 @@ export default function MatchesPage({ params }: Props) {
 
   function initLoggedInUser() {
     const user = getLoggedInUser();
-    setPlayer1Name(user.name);
+    setCurrentUser(user);
+    if (user.name && user.name !== "방문자") {
+      setPlayer1Name(user.name);
+    }
   }
 
   async function loadMatches() {

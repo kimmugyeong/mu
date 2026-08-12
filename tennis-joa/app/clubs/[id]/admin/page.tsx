@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { getLoggedInUser } from "@/lib/authSession";
+import { getLoggedInUser, AuthUser, isAdminUser } from "@/lib/authSession";
 import {
   ShieldCheck,
   Users,
@@ -48,11 +48,19 @@ export default function ClubAdminPage({ params }: Props) {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   // 로그인 유저 세션 관리
-  const [currentUser, setCurrentUser] = useState<{ name: string; username: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const sessionUser = getLoggedInUser();
     setCurrentUser(sessionUser);
+
+    // 라우트 보호 (Route Guard): admin 역할 및 admin ID가 아니면 즉시 이동 및 차단
+    if (!isAdminUser(sessionUser)) {
+      alert("접근 권한이 없습니다. 관리자만 접근할 수 있습니다.");
+      router.replace(`/clubs/${clubId}`);
+      return;
+    }
+
     loadMembers(sessionUser);
   }, [clubId]);
 
@@ -64,23 +72,17 @@ export default function ClubAdminPage({ params }: Props) {
   async function loadMembers(sessionUser?: any) {
     setLoading(true);
     const activeUser = sessionUser || currentUser || getLoggedInUser();
+    
+    if (!isAdminUser(activeUser)) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/clubs/${clubId}/members`);
       if (res.ok) {
         const data: ClubMember[] = await res.json();
         setMembers(data);
-
-        // 라우팅 보안 가드 (Route Guard): 최고관리자가 아니면서 일반 회원(MEMBER)인 경우 튕겨내기
-        if (!activeUser.isAdmin) {
-          const myMem = data.find(
-            (m) => m.userName === activeUser.name || m.userName === activeUser.username
-          );
-          if (myMem && myMem.role === "MEMBER") {
-            alert("접근 권한이 없습니다. 클럽 관리자만 진입할 수 있습니다.");
-            router.replace(`/clubs/${clubId}`);
-            return;
-          }
-        }
       } else {
         showToast("클럽원 목록을 가져오지 못했습니다.");
       }
@@ -175,6 +177,10 @@ export default function ClubAdminPage({ params }: Props) {
   const ownerCount = members.filter((m) => m.role === "OWNER").length;
   const managerCount = members.filter((m) => m.role === "MANAGER").length;
   const memberCount = members.filter((m) => m.role === "MEMBER").length;
+
+  if (!isAdminUser(currentUser)) {
+    return null;
+  }
 
   return (
     <div className="flex-1 bg-slate-50 text-slate-900 min-h-screen pb-24">

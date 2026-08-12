@@ -33,12 +33,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "잘못된 사용자 정보입니다." }, { status: 401 });
     }
 
+    const isAdmin = normalizedUsername === "admin";
     return NextResponse.json({
       user: {
-        id: user.id,
+        id: user.id === "admin" || normalizedUsername === "admin" ? "admin" : user.id,
         name: user.name,
         username: user.username,
-        isAdmin: user.username === "admin",
+        role: isAdmin ? "admin" : "user",
+        isAdmin,
       },
     });
   } catch (error) {
