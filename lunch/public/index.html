@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍱</text></svg>">
 </head>
-<body>
+<body class="dual-split-mode">
 
   <!-- Ambient Glow Background (Desktop View) -->
   <div class="ambient-bg">
@@ -22,7 +22,7 @@
 
   <!-- Desktop Top Controls -->
   <header class="desktop-controls-bar">
-    <button class="desktop-btn" id="split-view-toggle" title="스플릿 듀얼 뷰 토글">
+    <button class="desktop-btn active" id="split-view-toggle" title="단일 모바일 뷰로 전환">
       <span>🔲</span> 듀얼 뷰 (메뉴+톡)
     </button>
     <button class="desktop-btn" id="theme-toggle" title="다크/라이트 테마 변경">
@@ -204,7 +204,7 @@
       </div>
 
       <!-- Split Right Pane (Visible in desktop split-dual-mode) -->
-      <aside class="split-right-pane chat-panel-container" id="desktop-split-chat" style="display: none;">
+      <aside class="split-right-pane chat-panel-container" id="desktop-split-chat">
         <div class="chat-top-bar">
           <div class="chat-user-info">
             <span class="chat-user-label">실시간 런치톡 💬</span>

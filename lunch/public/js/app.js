@@ -148,14 +148,26 @@ class LunchApp {
       });
     }
 
-    // Split View Toggle for Desktop
+    // Split View Toggle for Desktop (Default is DUAL VIEW)
     const splitToggle = document.getElementById('split-view-toggle');
+    const savedMode = localStorage.getItem('lunch_view_mode');
+    const isMobile = window.innerWidth <= 768;
+
+    if (savedMode === 'single' && !isMobile) {
+      document.body.classList.remove('dual-split-mode');
+      if (splitToggle) splitToggle.classList.remove('active');
+    } else if (!isMobile) {
+      document.body.classList.add('dual-split-mode');
+      if (splitToggle) splitToggle.classList.add('active');
+    }
+
     if (splitToggle) {
       splitToggle.addEventListener('click', () => {
         document.body.classList.toggle('dual-split-mode');
         const isActive = document.body.classList.contains('dual-split-mode');
         splitToggle.classList.toggle('active', isActive);
         splitToggle.title = isActive ? '단일 모바일 뷰로 전환' : '스플릿 듀얼 뷰(메뉴+톡)로 전환';
+        localStorage.setItem('lunch_view_mode', isActive ? 'dual' : 'single');
       });
     }
 

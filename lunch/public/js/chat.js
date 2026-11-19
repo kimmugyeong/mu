@@ -282,7 +282,10 @@ class LunchChat {
   }
 
   async sendMessage(overrideText) {
-    const text = overrideText || (this.chatInput ? this.chatInput.value.trim() : '');
+    const text = (overrideText !== undefined && overrideText !== null)
+      ? String(overrideText).trim()
+      : ((this.chatInput && this.chatInput.value.trim()) || (this.splitChatInput && this.splitChatInput.value.trim()) || '');
+
     if (!text) return;
 
     if (!this.nickname) {
@@ -294,6 +297,17 @@ class LunchChat {
       message: text,
       avatarColor: this.avatarColor
     };
+
+    if (!overrideText) {
+      if (this.chatInput) {
+        this.chatInput.value = '';
+        this.chatInput.focus();
+      }
+      if (this.splitChatInput) {
+        this.splitChatInput.value = '';
+        this.splitChatInput.focus();
+      }
+    }
 
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: 'CHAT_MESSAGE', payload }));
@@ -312,14 +326,6 @@ class LunchChat {
       } catch (err) {
         console.error('HTTP Chat send error:', err);
       }
-    }
-
-    if (!overrideText && this.chatInput) {
-      this.chatInput.value = '';
-      this.chatInput.focus();
-    }
-    if (!overrideText && this.splitChatInput) {
-      this.splitChatInput.value = '';
     }
   }
 
@@ -360,6 +366,7 @@ class LunchChat {
       if (this.renderedChatIds.has(chat.id)) return;
       this.renderedChatIds.add(chat.id);
     }
+    const isMe = chat.nickname === this.nickname;
     const isSystem = chat.isSystem;
     const className = `chat-item ${isSystem ? 'system' : isMe ? 'me' : 'other'}`;
     const inner = this.createMessageHTML(chat);
