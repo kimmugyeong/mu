@@ -1,10 +1,16 @@
-require('dotenv').config();
-const { Pool } = require('pg');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'tennis-joa', '.env') });
+
+const { Pool } = require('pg');
+
+const DEFAULT_DATABASE_URL = 'postgresql://neondb_owner:npg_sx2qrplvo9DH@ep-rapid-forest-aua4560n-pooler.c-10.us-east-1.aws.neon.tech/neondb?sslmode=require';
+const connectionString = process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: {
     rejectUnauthorized: false
   }

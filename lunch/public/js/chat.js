@@ -2,6 +2,7 @@
 class LunchChat {
   constructor() {
     this.ws = null;
+    this.renderedChatIds = new Set();
     this.nickname = this.getStoredNickname() || this.generateRandomNickname();
     this.avatarColor = this.getStoredAvatarColor() || this.generateRandomColor();
     this.unreadCount = 0;
@@ -205,20 +206,19 @@ class LunchChat {
     if (this.pollingInterval) return;
     this.pollingInterval = setInterval(async () => {
       await this.pollNewMessages();
-    }, 3000);
+    }, 2500);
   }
 
   async pollNewMessages() {
     try {
       const res = await fetch('/api/chats');
       const data = await res.json();
-      if (data.success && data.chats) {
-        const lastExistingId = this.lastKnownChatId;
-        const newChats = lastExistingId
-          ? data.chats.filter(c => !this.renderedChatIds.has(c.id))
-          : data.chats;
-
-        newChats.forEach(chat => this.appendMessage(chat, true));
+      if (data.success && Array.isArray(data.chats)) {
+        data.chats.forEach(chat => {
+          if (!this.renderedChatIds.has(chat.id)) {
+            this.appendMessage(chat, true);
+          }
+        });
       }
     } catch (err) {
       // quiet poll error
@@ -317,6 +317,9 @@ class LunchChat {
     if (!overrideText && this.chatInput) {
       this.chatInput.value = '';
       this.chatInput.focus();
+    }
+    if (!overrideText && this.splitChatInput) {
+      this.splitChatInput.value = '';
     }
   }
 

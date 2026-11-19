@@ -542,6 +542,9 @@ class LunchApp {
       });
       const data = await res.json();
       if (data.success) {
+        if (data.menu) {
+          this.onMenuAdded(data.menu);
+        }
         this.closeAddModal();
         e.target.reset();
 
