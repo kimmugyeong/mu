@@ -29,7 +29,7 @@
   - **좋아요(❤️) 실시간 투표**: 클릭 즉시 DB 반영 및 모든 접속자에게 실시간 반영
   - **대화창에 추천(💬)**: 원클릭으로 런치톡 대화방에 추천 메시지 전송
   - **메뉴 직접 등록(➕)**: 하단 바텀시트 모달로 누구나 손쉽게 새로운 점심 메뉴 추가
-  - 영구 저장 DB (`data/db.json` 파일 기반 지속성)
+  - **영구 저장 PostgreSQL DB**: Neon Cloud PostgreSQL 연동(`lunch_menus`, `lunch_chats` 테이블)으로 모든 메뉴와 채팅 데이터가 안전하게 영구 저장 및 유지
 
 ---
 
@@ -77,11 +77,12 @@ node server.js
 
 ```
 mu/lunch/
+├── .env                  # PostgreSQL Neon 연결 설정
 ├── package.json          # 패키지 설정 및 스크립트
-├── server.js             # Express 서버, WebSocket 및 REST API, DB 엔진
+├── server.js             # Express 서버, WebSocket 및 REST API
+├── db.js                 # PostgreSQL Pool, 테이블 생성 및 메뉴/채팅 CRUD 모듈
 ├── data/
-│   ├── seed.json         # 초기 추천 메뉴(20개) 및 환영 채팅 시드
-│   └── db.json           # 메뉴 및 채팅 데이터 지속 저장소
+│   └── seed.json         # 초기 추천 메뉴(20개) 및 환영 채팅 시드 데이터
 └── public/
     ├── index.html        # 모바일 최적화 웹앱 메인 페이지
     ├── css/
