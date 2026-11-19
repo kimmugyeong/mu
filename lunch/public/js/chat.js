@@ -154,6 +154,14 @@ class LunchChat {
   }
 
   connectWebSocket() {
+    // Check if hosted on Vercel or similar serverless platform where WS isn't supported
+    const isVercel = window.location.hostname.endsWith('vercel.app');
+    if (isVercel) {
+      console.log('🌐 Vercel environment detected: using HTTP Polling mode');
+      this.startPolling();
+      return;
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}`;
 
@@ -162,6 +170,10 @@ class LunchChat {
 
       this.ws.onopen = () => {
         console.log('⚡ LunchChat WebSocket Connected');
+        if (this.pollingInterval) {
+          clearInterval(this.pollingInterval);
+          this.pollingInterval = null;
+        }
       };
 
       this.ws.onmessage = (event) => {
@@ -174,15 +186,42 @@ class LunchChat {
       };
 
       this.ws.onclose = () => {
-        console.log('WS Connection closed, retrying in 3s...');
-        setTimeout(() => this.connectWebSocket(), 3000);
+        console.log('WS Connection closed, switching to polling fallback...');
+        this.startPolling();
+        setTimeout(() => this.connectWebSocket(), 10000);
       };
 
       this.ws.onerror = (err) => {
-        console.error('WS Error:', err);
+        console.warn('WS Error, falling back to HTTP polling');
+        this.startPolling();
       };
     } catch (e) {
-      console.warn('WS Init failed, fallback to polling if needed:', e);
+      console.warn('WS Init failed, fallback to polling:', e);
+      this.startPolling();
+    }
+  }
+
+  startPolling() {
+    if (this.pollingInterval) return;
+    this.pollingInterval = setInterval(async () => {
+      await this.pollNewMessages();
+    }, 3000);
+  }
+
+  async pollNewMessages() {
+    try {
+      const res = await fetch('/api/chats');
+      const data = await res.json();
+      if (data.success && data.chats) {
+        const lastExistingId = this.lastKnownChatId;
+        const newChats = lastExistingId
+          ? data.chats.filter(c => !this.renderedChatIds.has(c.id))
+          : data.chats;
+
+        newChats.forEach(chat => this.appendMessage(chat, true));
+      }
+    } catch (err) {
+      // quiet poll error
     }
   }
 
@@ -223,6 +262,7 @@ class LunchChat {
   }
 
   async loadHistory() {
+    this.renderedChatIds = new Set();
     try {
       const res = await fetch('/api/chats');
       const data = await res.json();
@@ -241,7 +281,7 @@ class LunchChat {
     }
   }
 
-  sendMessage(overrideText) {
+  async sendMessage(overrideText) {
     const text = overrideText || (this.chatInput ? this.chatInput.value.trim() : '');
     if (!text) return;
 
@@ -258,7 +298,20 @@ class LunchChat {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: 'CHAT_MESSAGE', payload }));
     } else {
-      console.warn('WS not open');
+      // HTTP POST fallback for Vercel
+      try {
+        const res = await fetch('/api/chats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success && data.chat) {
+          this.appendMessage(data.chat, true);
+        }
+      } catch (err) {
+        console.error('HTTP Chat send error:', err);
+      }
     }
 
     if (!overrideText && this.chatInput) {
@@ -299,7 +352,11 @@ class LunchChat {
   }
 
   appendMessage(chat, shouldScroll = true) {
-    const isMe = chat.nickname === this.nickname;
+    if (!chat) return;
+    if (this.renderedChatIds && chat.id) {
+      if (this.renderedChatIds.has(chat.id)) return;
+      this.renderedChatIds.add(chat.id);
+    }
     const isSystem = chat.isSystem;
     const className = `chat-item ${isSystem ? 'system' : isMe ? 'me' : 'other'}`;
     const inner = this.createMessageHTML(chat);

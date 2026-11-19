@@ -1,20 +1,14 @@
 require('dotenv').config();
-const express = require('express');
 const http = require('http');
-const path = require('path');
 const os = require('os');
 const { WebSocketServer, WebSocket } = require('ws');
+const { app, setBroadcastCallback } = require('./api-app');
 const db = require('./db');
 
-const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Broadcast to all connected clients
 function broadcast(type, payload) {
@@ -25,6 +19,11 @@ function broadcast(type, payload) {
     }
   });
 }
+
+// Connect api-app broadcasts to WebSockets
+setBroadcastCallback((type, payload) => {
+  broadcast(type, payload);
+});
 
 // Track online users
 let onlineUsers = 0;
@@ -61,107 +60,6 @@ wss.on('connection', (ws) => {
   });
 });
 
-// REST APIs (PostgreSQL backed)
-
-// 1. Get all menus with optional search & filter
-app.get('/api/menus', async (req, res) => {
-  try {
-    const { category, search, sort } = req.query;
-    const menus = await db.getMenus({ category, search, sort });
-    res.json({ success: true, count: menus.length, menus });
-  } catch (err) {
-    console.error('API getMenus error:', err);
-    res.status(500).json({ success: false, message: '메뉴 목록을 불러오는 중 오류가 발생했습니다.' });
-  }
-});
-
-// 2. Add new menu
-app.post('/api/menus', async (req, res) => {
-  try {
-    const { name, category, price, restaurant, description, tags, author } = req.body;
-
-    if (!name || !name.trim()) {
-      return res.status(400).json({ success: false, message: '메뉴 이름을 입력해주세요.' });
-    }
-
-    const newMenu = await db.addMenu({
-      name,
-      category,
-      price,
-      restaurant,
-      description,
-      tags,
-      author
-    });
-
-    // Broadcast to all clients in real-time
-    broadcast('MENU_ADDED', newMenu);
-
-    res.status(201).json({ success: true, menu: newMenu });
-  } catch (err) {
-    console.error('API addMenu error:', err);
-    res.status(500).json({ success: false, message: '메뉴 등록에 실패했습니다.' });
-  }
-});
-
-// 3. Like a menu
-app.post('/api/menus/:id/like', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await db.likeMenu(id);
-
-    if (!result) {
-      return res.status(404).json({ success: false, message: '해당 메뉴를 찾을 수 없습니다.' });
-    }
-
-    broadcast('MENU_LIKED', { id: result.id, likes: result.likes });
-    res.json({ success: true, id: result.id, likes: result.likes });
-  } catch (err) {
-    console.error('API likeMenu error:', err);
-    res.status(500).json({ success: false, message: '좋아요 처리에 실패했습니다.' });
-  }
-});
-
-// 4. Delete a menu
-app.delete('/api/menus/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const success = await db.deleteMenu(id);
-
-    if (!success) {
-      return res.status(404).json({ success: false, message: '삭제할 메뉴가 없습니다.' });
-    }
-
-    broadcast('MENU_DELETED', { id });
-    res.json({ success: true, message: '메뉴가 삭제되었습니다.' });
-  } catch (err) {
-    console.error('API deleteMenu error:', err);
-    res.status(500).json({ success: false, message: '메뉴 삭제에 실패했습니다.' });
-  }
-});
-
-// 5. Get chats
-app.get('/api/chats', async (req, res) => {
-  try {
-    const chats = await db.getChats(100);
-    res.json({ success: true, chats, onlineCount: onlineUsers });
-  } catch (err) {
-    console.error('API getChats error:', err);
-    res.status(500).json({ success: false, message: '채팅 내역을 불러오는 중 오류가 발생했습니다.' });
-  }
-});
-
-// 6. Get category statistics
-app.get('/api/stats', async (req, res) => {
-  try {
-    const stats = await db.getStats();
-    res.json({ success: true, ...stats });
-  } catch (err) {
-    console.error('API getStats error:', err);
-    res.status(500).json({ success: false, message: '통계를 불러오지 못했습니다.' });
-  }
-});
-
 // Helper: Get local network IP for mobile device testing
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -174,11 +72,6 @@ function getLocalIP() {
   }
   return 'localhost';
 }
-
-// Fallback to index.html for SPA (Express 5 compatible)
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 // Initialize PostgreSQL and Start Server
 async function startServer() {
