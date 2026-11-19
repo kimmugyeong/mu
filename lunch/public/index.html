@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FF5722">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Lunch Lab - 오늘의 점심 메뉴 & 런치톡</title>
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍱</text></svg>">
+</head>
+<body>
+
+  <!-- Ambient Glow Background (Desktop View) -->
+  <div class="ambient-bg">
+    <div class="ambient-blob blob-1"></div>
+    <div class="ambient-blob blob-2"></div>
+    <div class="ambient-blob blob-3"></div>
+  </div>
+
+  <!-- Desktop Top Controls -->
+  <header class="desktop-controls-bar">
+    <button class="desktop-btn" id="split-view-toggle" title="스플릿 듀얼 뷰 토글">
+      <span>🔲</span> 듀얼 뷰 (메뉴+톡)
+    </button>
+    <button class="desktop-btn" id="theme-toggle" title="다크/라이트 테마 변경">
+      🌙
+    </button>
+  </header>
+
+  <!-- Mobile Device Shell Wrapper -->
+  <main class="app-wrapper">
+    <!-- Dynamic Island / Top Phone Notch -->
+    <div class="phone-island-bar">
+      <div class="island-notch">
+        <div class="notch-camera"></div>
+        <div class="notch-sensor"></div>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="header-top-row">
+        <div class="logo-area">
+          <span class="logo-icon-anim">🔥</span>
+          <div class="app-title-group">
+            <h1>Lunch Lab</h1>
+            <span class="sub-title">오늘의 맛있는 점심 연구소</span>
+          </div>
+        </div>
+        <div class="header-user-badge" id="header-nickname-btn" title="닉네임 변경하기">
+          <span class="nick-icon">👤</span>
+          <span id="header-nickname-text">익명의 미식가</span>
+          <span class="edit-pen">✏️</span>
+        </div>
+      </div>
+
+      <!-- Live Stats Banner -->
+      <div class="header-stats-banner">
+        <div class="stat-item">
+          <span>등록된 메뉴</span>
+          <span class="badge-count" id="menu-total-count">0개</span>
+        </div>
+        <div class="stat-item stat-hot">
+          <span>🔥 1위:</span>
+          <span id="top-menu-name">로딩 중...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Split Dual Container (Desktop split view or normal single view) -->
+    <div class="split-dual-container">
+      
+      <!-- Main Content Left Pane -->
+      <div class="split-left-pane main-content-scroll">
+
+        <!-- TAB 1: Menu List -->
+        <section class="tab-view-panel active" id="tab-menu">
+          <!-- Filter & Search Toolbar -->
+          <div class="filter-toolbar-row">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="menu-search-input" class="search-input" placeholder="메뉴명, 식당, 해시태그 검색..." autocomplete="off">
+              <button class="clear-btn" id="clear-search-btn">✕</button>
+            </div>
+            <div class="sort-select-box">
+              <select id="sort-select" class="sort-select">
+                <option value="likes">🔥 인기순</option>
+                <option value="latest">🕒 최신순</option>
+                <option value="priceAsc">💰 가격낮은순</option>
+                <option value="priceDesc">💸 가격높은순</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Category Pills Bar -->
+          <div class="category-pills-bar">
+            <button class="cat-pill active" data-category="전체">
+              <span>🍱</span> 전체
+            </button>
+            <button class="cat-pill" data-category="한식">
+              <span>🍚</span> 한식
+            </button>
+            <button class="cat-pill" data-category="중식">
+              <span>🥟</span> 중식
+            </button>
+            <button class="cat-pill" data-category="양식">
+              <span>🍝</span> 양식
+            </button>
+            <button class="cat-pill" data-category="분식">
+              <span>🍢</span> 분식
+            </button>
+            <button class="cat-pill" data-category="면종류">
+              <span>🍜</span> 면종류
+            </button>
+            <button class="cat-pill" data-category="일식/아시안">
+              <span>🍣</span> 일식/아시안
+            </button>
+            <button class="cat-pill" data-category="기타">
+              <span>🍔</span> 기타
+            </button>
+          </div>
+
+          <!-- Menu Cards Grid -->
+          <div class="menu-cards-grid" id="menu-card-list">
+            <!-- Dynamic Menu Cards Injected by app.js -->
+          </div>
+        </section>
+
+        <!-- TAB 2: Roulette "Today's Lunch" -->
+        <section class="tab-view-panel" id="tab-roulette">
+          <div class="roulette-container">
+            <div class="roulette-header-badge">🎯 결정장애 완벽 해결!</div>
+            <h2 class="roulette-title">오늘 뭐 먹지? 행운의 룰렛</h2>
+            <p class="roulette-subtitle">고민할 시간도 아까운 점심시간, 운명에 맡겨보세요!</p>
+
+            <div class="roulette-filter-box">
+              <label for="roulette-category-filter">카테고리:</label>
+              <select id="roulette-category-filter">
+                <option value="전체">🥢 전체 카테고리</option>
+                <option value="한식">🍚 한식만</option>
+                <option value="중식">🥟 중식만</option>
+                <option value="양식">🍝 양식만</option>
+                <option value="분식">🍢 분식만</option>
+                <option value="면종류">🍜 면종류만</option>
+                <option value="일식/아시안">🍣 일식/아시안만</option>
+              </select>
+            </div>
+
+            <!-- Roulette Wheel Wrapper -->
+            <div class="roulette-wheel-wrapper">
+              <div class="roulette-pointer"></div>
+              <canvas id="roulette-canvas"></canvas>
+            </div>
+
+            <button class="spin-action-btn" id="spin-roulette-btn">
+              <span>🎲</span> 룰렛 힘차게 돌리기!
+            </button>
+          </div>
+        </section>
+
+        <!-- TAB 3: Lunch Chat (Mobile single mode) -->
+        <section class="tab-view-panel chat-panel-container" id="tab-chat">
+          <div class="chat-top-bar">
+            <div class="chat-user-info">
+              <span class="chat-user-label">내 닉네임:</span>
+              <span class="chat-my-nick" id="chat-user-nickname">익명의 미식가</span>
+              <button class="random-nick-btn" id="random-nickname-btn" title="랜덤 닉네임 재생성">🎲</button>
+            </div>
+            <div class="online-users-badge">
+              <span class="online-dot"></span>
+              <span id="online-users-count">1명 대화중</span>
+            </div>
+          </div>
+
+          <!-- Messages List -->
+          <div class="chat-messages-container" id="chat-messages-list">
+            <!-- Messages dynamically inserted here -->
+          </div>
+
+          <!-- Quick Emoji Toolbar -->
+          <div class="chat-quick-emojis">
+            <button class="quick-emoji-btn" data-emoji="🤤">🤤</button>
+            <button class="quick-emoji-btn" data-emoji="🍱">🍱</button>
+            <button class="quick-emoji-btn" data-emoji="🍜">🍜</button>
+            <button class="quick-emoji-btn" data-emoji="🥩">🥩</button>
+            <button class="quick-emoji-btn" data-emoji="👍">👍</button>
+            <button class="quick-emoji-btn" data-emoji="🔥">🔥</button>
+            <button class="quick-emoji-btn" data-emoji="🍕">🍕</button>
+            <button class="quick-emoji-btn" data-emoji="🍻">🍻</button>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="chat-input-bar">
+            <input type="text" id="chat-input" class="chat-input-field" placeholder="닉네임으로 자유롭게 대화하세요..." maxlength="150" autocomplete="off">
+            <button id="chat-send-btn" class="chat-send-btn" title="전송">
+              ➤
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Split Right Pane (Visible in desktop split-dual-mode) -->
+      <aside class="split-right-pane chat-panel-container" id="desktop-split-chat" style="display: none;">
+        <div class="chat-top-bar">
+          <div class="chat-user-info">
+            <span class="chat-user-label">실시간 런치톡 💬</span>
+            <span class="chat-my-nick" id="split-chat-user-nickname">익명의 미식가</span>
+          </div>
+          <div class="online-users-badge">
+            <span class="online-dot"></span>
+            <span id="split-online-users-count">1명 대화중</span>
+          </div>
+        </div>
+
+        <div class="chat-messages-container" id="split-chat-messages-list">
+          <!-- Synced Chat Messages -->
+        </div>
+
+        <div class="chat-quick-emojis">
+          <button class="quick-emoji-btn-split" data-emoji="🤤">🤤</button>
+          <button class="quick-emoji-btn-split" data-emoji="🍱">🍱</button>
+          <button class="quick-emoji-btn-split" data-emoji="🍜">🍜</button>
+          <button class="quick-emoji-btn-split" data-emoji="🥩">🥩</button>
+          <button class="quick-emoji-btn-split" data-emoji="👍">👍</button>
+          <button class="quick-emoji-btn-split" data-emoji="🔥">🔥</button>
+          <button class="quick-emoji-btn-split" data-emoji="🍕">🍕</button>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="split-chat-input" class="chat-input-field" placeholder="대화에 참여하세요..." maxlength="150" autocomplete="off">
+          <button id="split-chat-send-btn" class="chat-send-btn" title="전송">
+            ➤
+          </button>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile Native Feel) -->
+    <nav class="bottom-nav-bar">
+      <button class="nav-tab-btn active" data-tab="menu">
+        <span class="tab-icon">🍱</span>
+        <span class="tab-label">메뉴판</span>
+      </button>
+
+      <button class="nav-tab-btn" data-tab="roulette">
+        <span class="tab-icon">🎲</span>
+        <span class="tab-label">오늘뭐먹지</span>
+      </button>
+
+      <!-- Center Floating Plus Button -->
+      <button class="nav-tab-btn add-btn-special" data-tab="add" title="새 메뉴 등록">
+        <span class="tab-icon">＋</span>
+      </button>
+
+      <button class="nav-tab-btn" data-tab="chat">
+        <span class="tab-icon">💬</span>
+        <span class="tab-label">런치톡</span>
+        <span class="badge-unread" id="chat-nav-badge">0</span>
+      </button>
+    </nav>
+  </main>
+
+  <!-- ==========================================================================
+       MODAL 1: Add Lunch Menu Bottom Sheet
+       ========================================================================== -->
+  <div class="modal-backdrop" id="add-menu-modal">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2>✨ 맛있는 점심 메뉴 등록</h2>
+        <button class="close-sheet-btn" id="close-add-modal-btn">✕</button>
+      </div>
+
+      <form id="add-menu-form">
+        <div class="form-group">
+          <label class="form-label" for="menu-name-input">메뉴 이름 *</label>
+          <input type="text" id="menu-name-input" class="form-input" placeholder="예: 직화 쭈꾸미 볶음" required maxlength="30">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">카테고리 선택 *</label>
+          <div class="category-radio-grid">
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="한식" checked>
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍚</span>
+                <span>한식</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="중식">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🥟</span>
+                <span>중식</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="양식">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍝</span>
+                <span>양식</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="분식">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍢</span>
+                <span>분식</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="면종류">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍜</span>
+                <span>면종류</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="일식/아시안">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍣</span>
+                <span>일식/아시안</span>
+              </div>
+            </label>
+
+            <label class="cat-radio-label">
+              <input type="radio" name="menu-category" value="기타">
+              <div class="cat-radio-tile">
+                <span class="tile-icon">🍔</span>
+                <span>기타</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menu-price-input">가격대 (원)</label>
+          <input type="number" id="menu-price-input" class="form-input" placeholder="9000" min="0" step="500">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menu-restaurant-input">추천 식당 / 위치 (선택)</label>
+          <input type="text" id="menu-restaurant-input" class="form-input" placeholder="예: 회사 뒤편 신촌식당" maxlength="30">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menu-desc-input">한줄평 / 매력 포인트 (선택)</label>
+          <textarea id="menu-desc-input" class="form-textarea" placeholder="불향 가득하고 반찬이 푸짐해서 배부르게 먹을 수 있어요!" maxlength="100"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menu-tags-input">해시태그 (쉼표로 구분)</label>
+          <input type="text" id="menu-tags-input" class="form-input" placeholder="불맛, 매콤, 가성비, 해장">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menu-author-input">작성자 닉네임</label>
+          <input type="text" id="menu-author-input" class="form-input" placeholder="익명의 미식가" maxlength="15">
+        </div>
+
+        <button type="submit" class="sheet-submit-btn">
+          🚀 메뉴 등록 완료하기
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: Change Nickname Modal
+       ========================================================================== -->
+  <div class="modal-backdrop" id="nickname-modal">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2>👤 닉네임 설정</h2>
+        <button class="close-sheet-btn" id="close-nickname-modal-btn">✕</button>
+      </div>
+
+      <form id="nickname-form">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 12px;">
+          로그인 없이 간편하게 사용할 닉네임을 입력하세요!
+        </p>
+        <div class="form-group">
+          <input type="text" id="custom-nickname-input" class="form-input" placeholder="예: 불타는 제육 🥩" maxlength="15" required>
+        </div>
+        <button type="submit" class="sheet-submit-btn">
+          확인
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: Roulette Winning Result Modal
+       ========================================================================== -->
+  <div class="modal-backdrop" id="roulette-result-modal">
+    <div class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <div class="winner-card-body">
+        <div class="winner-emoji-anim">🎉</div>
+        <span class="winner-cat-badge" id="result-winner-category">한식</span>
+        <h3 class="winner-title" id="result-winner-name">직화 제육볶음 정식</h3>
+        <p class="winner-desc" id="result-winner-desc">불향 가득하고 쌈채소 무한리필!</p>
+        <div class="winner-price" id="result-winner-price">₩9,500</div>
+
+        <div class="winner-actions-row">
+          <button class="winner-share-btn" id="share-result-to-chat-btn">
+            💬 런치톡에 자랑하기!
+          </button>
+          <button class="winner-close-btn" id="close-result-modal-btn">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/confetti.js"></script>
+  <script src="/js/roulette.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
